@@ -1,0 +1,300 @@
+---
+import BaseLayout from '../../../components/BaseLayout.astro';
+import { type BlogPost, createContentfulService } from '../../../lib/contentful.ts';
+import { MockContentfulService } from '../../../lib/mocks.ts';
+import { createSchemaGenerator } from '../../../lib/schemas.ts';
+
+export const prerender = false; // SSR route for preview
+
+// Get slug from URL parameters
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/404');
+}
+
+// Check for preview authentication via cookie
+const previewCookie = Astro.cookies.get('preview');
+const isPreviewMode = previewCookie?.value === 'true';
+
+// If not in preview mode, redirect to public blog post
+if (!isPreviewMode) {
+  return Astro.redirect(`/blog/${slug}`);
+}
+
+// Initialize content service with fallback to mocks
+const contentfulService = createContentfulService();
+let blogPost: BlogPost | null = null;
+
+try {
+  if (contentfulService) {
+    // Fetch from Contentful Preview API (draft content)
+    blogPost = await contentfulService.getBlogPost(slug, true);
+  } else {
+    // Fallback to mock data in development
+    const mockService = new MockContentfulService();
+    blogPost = await mockService.getBlogPost(slug, true);
+  }
+} catch (error) {
+  console.error(`Error fetching preview blog post ${slug}:`, error);
+}
+
+// If blog post not found, return 404
+if (!blogPost) {
+  return Astro.redirect('/404');
+}
+
+// At this point, blogPost is guaranteed to be non-null
+// Create local variables for template use
+const post = blogPost;
+const author = blogPost.author;
+
+// Generate structured data for the blog post
+const schemaGenerator = createSchemaGenerator();
+const canonicalUrl = new URL(`/preview/blog/${post.slug}`, Astro.site || 'http://localhost:4321')
+  .href;
+const structuredData = schemaGenerator.generateBlogPostingSchema(post, canonicalUrl);
+
+// SEO configuration for preview page - NOINDEX and NOFOLLOW
+const seoProps = {
+  title: `[PREVIEW] ${post.seo?.title || post.title}`,
+  description: post.seo?.description || post.excerpt,
+  canonical: canonicalUrl,
+  ogImage: post.seo?.ogImage?.fields.file.url || post.featuredImage?.fields.file.url,
+  ogType: 'article' as const,
+  noindex: true,
+  nofollow: true,
+  structuredData,
+};
+
+// Format published date
+const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+// Format reading time estimate (rough calculation)
+const wordsPerMinute = 200;
+const wordCount = post.content.split(/\s+/).length;
+const readingTime = Math.ceil(wordCount / wordsPerMinute);
+---
+
+<BaseLayout seo={seoProps}>
+  <!-- Preview Mode Banner -->
+  <div class="bg-yellow-100 border-b border-yellow-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="h-5 w-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <span class="text-yellow-800 font-medium">Preview Mode</span>
+          <span class="text-yellow-700 ml-2">This is a draft version not visible to the public</span>
+        </div>
+        <a 
+          href={`/blog/${post.slug}`}
+          class="text-yellow-800 hover:text-yellow-900 font-medium underline"
+        >
+          View Published Version
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Article Header -->
+    <header class="mb-12">
+      <!-- Breadcrumb Navigation -->
+      <nav class="mb-8" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+          <li>
+            <a href="/" class="hover:text-gray-700 transition-colors">Home</a>
+          </li>
+          <li>
+            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </li>
+          <li>
+            <a href="/blog" class="hover:text-gray-700 transition-colors">Blog</a>
+          </li>
+          <li>
+            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </li>
+          <li>
+            <span class="text-gray-900 font-medium">[PREVIEW] {post.title}</span>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Category Badge -->
+      <div class="mb-6">
+        <a 
+          href={`/category/${post.category.slug}`}
+          class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors"
+          style={`background-color: ${post.category.color}20; color: ${post.category.color}`}
+        >
+          {post.category.name}
+        </a>
+      </div>
+
+      <!-- Article Title -->
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+        {post.title}
+      </h1>
+
+      <!-- Article Excerpt -->
+      <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+        {post.excerpt}
+      </p>
+
+      <!-- Article Meta -->
+      <div class="flex flex-wrap items-center gap-6 text-sm text-gray-500 mb-8">
+        <!-- Author -->
+        <div class="flex items-center">
+          {author.avatar && (
+            <img
+              src={author.avatar.fields.file.url}
+              alt={author.name}
+              class="h-10 w-10 rounded-full mr-3"
+              width="40"
+              height="40"
+            />
+          )}
+          <div>
+            <p class="text-gray-900 font-medium">{author.name}</p>
+            <p class="text-gray-500">Author</p>
+          </div>
+        </div>
+
+        <!-- Published Date -->
+        <div class="flex items-center">
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <time datetime={post.publishedAt}>{publishedDate}</time>
+        </div>
+
+        <!-- Reading Time -->
+        <div class="flex items-center">
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{readingTime} min read</span>
+        </div>
+      </div>
+
+      <!-- Featured Image -->
+      {post.featuredImage && (
+        <div class="mb-12">
+          <img
+            src={post.featuredImage.fields.file.url}
+            alt={post.featuredImage.fields.title}
+            class="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg"
+            width={post.featuredImage.fields.file.details.image?.width || 800}
+            height={post.featuredImage.fields.file.details.image?.height || 400}
+            loading="eager"
+            fetchpriority="high"
+          />
+          {post.featuredImage.fields.description && (
+            <p class="text-sm text-gray-500 mt-2 text-center italic">
+              {post.featuredImage.fields.description}
+            </p>
+          )}
+        </div>
+      )}
+    </header>
+
+    <!-- Article Content -->
+    <div class="prose prose-lg prose-gray max-w-none mb-12">
+      <!-- Note: In a real implementation, you would parse and render the rich text content -->
+      <!-- For this demo, we're displaying the content as-is -->
+      <div class="whitespace-pre-wrap leading-relaxed">
+        {post.content}
+      </div>
+    </div>
+
+    <!-- Article Tags -->
+    {post.tags.length > 0 && (
+      <div class="mb-12">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Tags</h3>
+        <div class="flex flex-wrap gap-2">
+          {post.tags.map((tag) => (
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Author Bio -->
+    <div class="border-t border-gray-200 pt-12">
+      <div class="flex items-start space-x-4">
+        {author.avatar && (
+          <img
+            src={author.avatar.fields.file.url}
+            alt={author.name}
+            class="h-16 w-16 rounded-full flex-shrink-0"
+            width="64"
+            height="64"
+          />
+        )}
+        <div class="flex-1">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            About {author.name}
+          </h3>
+          {author.bio && (
+            <p class="text-gray-600 mb-4">
+              {author.bio}
+            </p>
+          )}
+          {author.socialLinks && (
+            <div class="flex space-x-4">
+              {Object.entries(author.socialLinks).map(([platform, url]) => (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label={`${author.name} on ${platform}`}
+                >
+                  <span class="capitalize">{platform}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- Preview Mode Footer -->
+  <div class="bg-yellow-50 border-t border-yellow-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="text-center">
+        <p class="text-yellow-800 mb-4">
+          You are viewing a preview of this blog post. This content is not indexed by search engines.
+        </p>
+        <div class="flex justify-center space-x-4">
+          <a 
+            href={`/blog/${post.slug}`}
+            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+          >
+            View Published Version
+          </a>
+          <a 
+            href="/blog"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Back to Blog
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -5,6 +5,28 @@ import { type ContentfulClientApi, type Entry, createClient } from 'contentful';
 // biome-ignore lint/suspicious/noExplicitAny: Contentful entries have dynamic structure
 type ContentfulEntry = Entry<any>;
 
+// Helper function to safely convert Contentful fields to strings
+function safeString(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return fallback;
+  // Only convert primitive types to avoid Object stringification
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return fallback;
+}
+
+// Helper function to safely convert optional Contentful fields to strings
+function safeOptionalString(value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === 'string') return value;
+  // Only convert primitive types to avoid Object stringification
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return undefined;
+}
+
 // Contentful asset file type
 interface ContentfulAssetFile {
   url: string;
@@ -160,12 +182,40 @@ export function createPreviewClient(config: ContentfulConfig): ContentfulClientA
 // Main Contentful service implementation
 export class ContentfulService implements ContentFetcher {
   constructor(
-    private deliveryClient: ContentfulClientApi<undefined>,
-    private previewClient: ContentfulClientApi<undefined>
+    private readonly deliveryClient: ContentfulClientApi<undefined>,
+    private readonly previewClient: ContentfulClientApi<undefined>
   ) {}
 
   private getClient(preview: boolean): ContentfulClientApi<undefined> {
     return preview ? this.previewClient : this.deliveryClient;
+  }
+
+  private async fetchBlogPost(slug: string, preview: boolean): Promise<BlogPost | null> {
+    const client = this.getClient(preview);
+    const entries = await client.getEntries({
+      content_type: 'blogPost',
+      'fields.slug': slug,
+      limit: 1,
+      include: 2,
+    });
+
+    if (entries.items.length === 0) {
+      return null;
+    }
+
+    return this.transformBlogPost(entries.items[0]);
+  }
+
+  private async fetchBlogPosts(limit: number, preview: boolean): Promise<BlogPost[]> {
+    const client = this.getClient(preview);
+    const entries = await client.getEntries({
+      content_type: 'blogPost',
+      limit,
+      order: ['-fields.publishedAt'],
+      include: 2,
+    });
+
+    return entries.items.map((entry: ContentfulEntry) => this.transformBlogPost(entry));
   }
 
   private transformAsset(asset: ContentfulEntry | undefined): ContentfulAsset | undefined {
@@ -178,8 +228,8 @@ export class ContentfulService implements ContentFetcher {
         updatedAt: asset.sys.updatedAt,
       },
       fields: {
-        title: String(asset.fields.title || ''),
-        description: asset.fields.description ? String(asset.fields.description) : undefined,
+        title: safeString(asset.fields.title),
+        description: safeOptionalString(asset.fields.description),
         file: asset.fields.file as unknown as ContentfulAssetFile,
       },
     };
@@ -196,9 +246,9 @@ export class ContentfulService implements ContentFetcher {
         createdAt: entry.sys.createdAt,
         updatedAt: entry.sys.updatedAt,
       },
-      name: String(entry.fields.name),
-      slug: String(entry.fields.slug),
-      bio: entry.fields.bio ? String(entry.fields.bio) : undefined,
+      name: safeString(entry.fields.name),
+      slug: safeString(entry.fields.slug),
+      bio: safeOptionalString(entry.fields.bio),
       avatar: entry.fields.avatar
         ? this.transformAsset(entry.fields.avatar as ContentfulEntry)
         : undefined,
@@ -217,13 +267,13 @@ export class ContentfulService implements ContentFetcher {
         createdAt: entry.sys.createdAt,
         updatedAt: entry.sys.updatedAt,
       },
-      name: String(entry.fields.name),
-      slug: String(entry.fields.slug),
-      description: String(entry.fields.description),
+      name: safeString(entry.fields.name),
+      slug: safeString(entry.fields.slug),
+      description: safeString(entry.fields.description),
       featuredImage: entry.fields.featuredImage
         ? this.transformAsset(entry.fields.featuredImage as ContentfulEntry)
         : undefined,
-      color: String(entry.fields.color),
+      color: safeString(entry.fields.color),
     };
   }
 
@@ -234,24 +284,22 @@ export class ContentfulService implements ContentFetcher {
         createdAt: entry.sys.createdAt,
         updatedAt: entry.sys.updatedAt,
       },
-      title: String(entry.fields.title),
-      slug: String(entry.fields.slug),
-      excerpt: String(entry.fields.excerpt),
-      content: String(entry.fields.content),
+      title: safeString(entry.fields.title),
+      slug: safeString(entry.fields.slug),
+      excerpt: safeString(entry.fields.excerpt),
+      content: safeString(entry.fields.content),
       featuredImage: entry.fields.featuredImage
         ? this.transformAsset(entry.fields.featuredImage as ContentfulEntry)
         : undefined,
       author: this.transformAuthor(entry.fields.author as ContentfulEntry),
       category: this.transformCategory(entry.fields.category as ContentfulEntry),
       tags: Array.isArray(entry.fields.tags) ? entry.fields.tags.map(String) : [],
-      publishedAt: String(entry.fields.publishedAt),
+      publishedAt: safeString(entry.fields.publishedAt),
       seo:
         entry.fields.seoTitle || entry.fields.seoDescription || entry.fields.seoImage
           ? {
-              title: entry.fields.seoTitle ? String(entry.fields.seoTitle) : undefined,
-              description: entry.fields.seoDescription
-                ? String(entry.fields.seoDescription)
-                : undefined,
+              title: safeOptionalString(entry.fields.seoTitle),
+              description: safeOptionalString(entry.fields.seoDescription),
               ogImage: entry.fields.seoImage
                 ? this.transformAsset(entry.fields.seoImage as ContentfulEntry)
                 : undefined,
@@ -267,10 +315,10 @@ export class ContentfulService implements ContentFetcher {
         createdAt: entry.sys.createdAt,
         updatedAt: entry.sys.updatedAt,
       },
-      title: String(entry.fields.title),
-      slug: String(entry.fields.slug),
-      description: String(entry.fields.description),
-      content: String(entry.fields.content),
+      title: safeString(entry.fields.title),
+      slug: safeString(entry.fields.slug),
+      description: safeString(entry.fields.description),
+      content: safeString(entry.fields.content),
       difficulty: entry.fields.difficulty as 'beginner' | 'intermediate' | 'advanced',
       estimatedTime: Number(entry.fields.estimatedTime),
       steps: Array.isArray(entry.fields.steps)
@@ -281,7 +329,7 @@ export class ContentfulService implements ContentFetcher {
         : undefined,
       category: this.transformCategory(entry.fields.category as ContentfulEntry),
       tools: Array.isArray(entry.fields.tools) ? entry.fields.tools.map(String) : [],
-      publishedAt: String(entry.fields.publishedAt),
+      publishedAt: safeString(entry.fields.publishedAt),
     };
   }
 
@@ -292,28 +340,16 @@ export class ContentfulService implements ContentFetcher {
         createdAt: entry.sys.createdAt,
         updatedAt: entry.sys.updatedAt,
       },
-      question: String(entry.fields.question),
-      answer: String(entry.fields.answer),
-      category: String(entry.fields.category),
+      question: safeString(entry.fields.question),
+      answer: safeString(entry.fields.answer),
+      category: safeString(entry.fields.category),
       order: Number(entry.fields.order),
     };
   }
 
   async getBlogPost(slug: string, preview = false): Promise<BlogPost | null> {
     try {
-      const client = this.getClient(preview);
-      const entries = await client.getEntries({
-        content_type: 'blogPost',
-        'fields.slug': slug,
-        limit: 1,
-        include: 2,
-      });
-
-      if (entries.items.length === 0) {
-        return null;
-      }
-
-      return this.transformBlogPost(entries.items[0]);
+      return await this.fetchBlogPost(slug, preview);
     } catch (error) {
       console.error(`Error fetching blog post ${slug}:`, error);
       throw new Error(`Failed to fetch blog post: ${slug}`);
@@ -322,15 +358,7 @@ export class ContentfulService implements ContentFetcher {
 
   async getBlogPosts(limit = 10, preview = false): Promise<BlogPost[]> {
     try {
-      const client = this.getClient(preview);
-      const entries = await client.getEntries({
-        content_type: 'blogPost',
-        limit,
-        order: ['-fields.publishedAt'],
-        include: 2,
-      });
-
-      return entries.items.map((entry: ContentfulEntry) => this.transformBlogPost(entry));
+      return await this.fetchBlogPosts(limit, preview);
     } catch (error) {
       console.error('Error fetching blog posts:', error);
       throw new Error('Failed to fetch blog posts');

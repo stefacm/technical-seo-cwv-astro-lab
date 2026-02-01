@@ -128,7 +128,7 @@ interface SchemaConfig {
  * Implements single responsibility principle - only handles schema generation
  */
 export class SchemaGenerator {
-  private config: SchemaConfig;
+  private readonly config: SchemaConfig;
 
   constructor(config: SchemaConfig) {
     this.config = config;

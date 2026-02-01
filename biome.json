@@ -70,6 +70,18 @@
       }
     }
   },
+  "overrides": [
+    {
+      "include": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -102,6 +114,6 @@
       "*.js",
       "*.mjs"
     ],
-    "ignore": ["node_modules", "dist", ".astro"]
+    "ignore": ["node_modules", "dist", ".astro", ".vercel"]
   }
 }
