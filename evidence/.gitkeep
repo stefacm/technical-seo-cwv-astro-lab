@@ -1,0 +1,7 @@
+# Evidence Directory
+
+This directory will contain:
+- lighthouse-before.png - Performance before optimization
+- lighthouse-after.png - Performance after optimization  
+- view-source-noindex.png - NOINDEX verification
+- sitemap-validation.png - Sitemap validation results
