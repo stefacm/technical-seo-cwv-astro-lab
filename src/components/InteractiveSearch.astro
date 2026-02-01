@@ -1,0 +1,333 @@
+---
+export interface InteractiveSearchProps {
+  placeholder?: string;
+  className?: string;
+  hydrationStrategy?: 'visible' | 'idle' | 'load' | 'media';
+  mediaQuery?: string;
+}
+
+const {
+  placeholder = 'Search articles and guides...',
+  className = '',
+  hydrationStrategy = 'visible',
+  mediaQuery = '(min-width: 768px)',
+} = Astro.props as InteractiveSearchProps;
+
+// Generate client directive based on hydration strategy
+const getClientDirective = (strategy: string, media?: string) => {
+  switch (strategy) {
+    case 'visible':
+      return 'client:visible';
+    case 'idle':
+      return 'client:idle';
+    case 'load':
+      return 'client:load';
+    case 'media':
+      return `client:media="${media}"`;
+    default:
+      return 'client:visible';
+  }
+};
+
+const clientDirective = getClientDirective(hydrationStrategy, mediaQuery);
+
+// Ensure variables are used
+void clientDirective;
+---
+
+<!-- Server-rendered fallback (no JavaScript) -->
+<div class={`search-container ${className}`}>
+  <form action="/search" method="GET" class="relative">
+    <div class="relative">
+      <input
+        type="text"
+        name="q"
+        placeholder={placeholder}
+        class="w-full px-4 py-3 pl-12 pr-4 text-gray-900 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        aria-label="Search"
+      />
+      <div class="absolute inset-y-0 left-0 flex items-center pl-4">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+    
+    <button
+      type="submit"
+      class="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+    >
+      Search
+    </button>
+  </form>
+</div>
+
+<!-- Enhanced interactive version (with JavaScript) -->
+<script define:vars={{ placeholder, hydrationStrategy }} is:inline>
+  // This script will only run when the component is hydrated
+  class InteractiveSearch {
+    constructor(container) {
+      this.container = container;
+      this.input = container.querySelector('input[name="q"]');
+      this.form = container.querySelector('form');
+      this.resultsContainer = null;
+      this.debounceTimer = null;
+      
+      this.init();
+    }
+    
+    init() {
+      // Add real-time search functionality
+      this.input.addEventListener('input', this.handleInput.bind(this));
+      this.form.addEventListener('submit', this.handleSubmit.bind(this));
+      
+      // Create results container
+      this.createResultsContainer();
+      
+      // Add keyboard navigation
+      this.input.addEventListener('keydown', this.handleKeydown.bind(this));
+      
+      // Add focus/blur handlers
+      this.input.addEventListener('focus', this.handleFocus.bind(this));
+      this.input.addEventListener('blur', this.handleBlur.bind(this));
+      
+      // Mark as enhanced
+      this.container.classList.add('search-enhanced');
+    }
+    
+    createResultsContainer() {
+      this.resultsContainer = document.createElement('div');
+      this.resultsContainer.className = 'absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto z-50 hidden';
+      this.resultsContainer.setAttribute('role', 'listbox');
+      this.container.appendChild(this.resultsContainer);
+    }
+    
+    handleInput(event) {
+      const query = event.target.value.trim();
+      
+      // Clear previous timer
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+      }
+      
+      // Debounce search requests
+      this.debounceTimer = setTimeout(() => {
+        if (query.length >= 2) {
+          this.performSearch(query);
+        } else {
+          this.hideResults();
+        }
+      }, 300);
+    }
+    
+    async performSearch(query) {
+      try {
+        // Show loading state
+        this.showLoading();
+        
+        // Simulate search API call (replace with actual search endpoint)
+        const results = await this.mockSearch(query);
+        
+        // Display results
+        this.displayResults(results);
+      } catch (error) {
+        console.error('Search error:', error);
+        this.showError();
+      }
+    }
+    
+    async mockSearch(query) {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Mock search results
+      return [
+        {
+          title: `Advanced ${query} Optimization`,
+          type: 'Blog Post',
+          url: '/blog/advanced-optimization',
+          excerpt: `Learn advanced techniques for ${query} optimization...`
+        },
+        {
+          title: `${query} Best Practices Guide`,
+          type: 'Guide',
+          url: '/guides/best-practices',
+          excerpt: `Comprehensive guide to ${query} best practices...`
+        }
+      ].filter(result => 
+        result.title.toLowerCase().includes(query.toLowerCase()) ||
+        result.excerpt.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    
+    displayResults(results) {
+      if (results.length === 0) {
+        this.resultsContainer.innerHTML = `
+          <div class="p-4 text-center text-gray-500">
+            <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.562M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <p class="text-sm">No results found</p>
+          </div>
+        `;
+      } else {
+        this.resultsContainer.innerHTML = results.map((result, index) => `
+          <a 
+            href="${result.url}" 
+            class="block p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 focus:bg-gray-50 focus:outline-none"
+            role="option"
+            data-index="${index}"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-medium text-gray-900 truncate">${result.title}</h4>
+                <p class="text-xs text-gray-500 mt-1">${result.type}</p>
+                <p class="text-sm text-gray-600 mt-1 line-clamp-2">${result.excerpt}</p>
+              </div>
+              <svg class="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+        `).join('');
+      }
+      
+      this.showResults();
+    }
+    
+    showLoading() {
+      this.resultsContainer.innerHTML = `
+        <div class="p-4 text-center">
+          <div class="inline-flex items-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm text-gray-600">Searching...</span>
+          </div>
+        </div>
+      `;
+      this.showResults();
+    }
+    
+    showError() {
+      this.resultsContainer.innerHTML = `
+        <div class="p-4 text-center text-red-500">
+          <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm">Search temporarily unavailable</p>
+        </div>
+      `;
+      this.showResults();
+    }
+    
+    showResults() {
+      this.resultsContainer.classList.remove('hidden');
+    }
+    
+    hideResults() {
+      this.resultsContainer.classList.add('hidden');
+    }
+    
+    handleSubmit(event) {
+      // Allow form submission to work without JavaScript
+      const query = this.input.value.trim();
+      if (!query) {
+        event.preventDefault();
+      }
+    }
+    
+    handleKeydown(event) {
+      // Add keyboard navigation for results
+      if (event.key === 'Escape') {
+        this.hideResults();
+        this.input.blur();
+      }
+    }
+    
+    handleFocus() {
+      if (this.input.value.trim().length >= 2) {
+        this.showResults();
+      }
+    }
+    
+    handleBlur() {
+      // Delay hiding to allow clicking on results
+      setTimeout(() => {
+        if (!this.container.contains(document.activeElement)) {
+          this.hideResults();
+        }
+      }, 150);
+    }
+  }
+  
+  // Initialize when component is hydrated
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchContainers = document.querySelectorAll('.search-container:not(.search-enhanced)');
+    searchContainers.forEach(container => {
+      new InteractiveSearch(container);
+    });
+  });
+</script>
+
+<style>
+  /* Base styles for server-rendered version */
+  .search-container {
+    position: relative;
+    max-width: 100%;
+  }
+  
+  /* Enhanced styles when JavaScript is available */
+  .search-enhanced {
+    /* Additional styles for enhanced version */
+  }
+  
+  /* Smooth transitions for interactive elements */
+  .search-container input {
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .search-container button {
+    transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+  }
+  
+  .search-container button:active {
+    transform: translateY(1px);
+  }
+  
+  /* Results container animations */
+  .search-container [role="listbox"] {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Line clamp utility */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Loading animation */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+</style>

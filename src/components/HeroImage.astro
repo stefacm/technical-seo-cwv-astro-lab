@@ -1,0 +1,156 @@
+---
+export interface HeroImageProps {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  overlay?: boolean;
+  overlayColor?: string;
+  overlayOpacity?: number;
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  className = '',
+  overlay = false,
+  overlayColor = 'blue',
+  overlayOpacity = 20,
+} = Astro.props as HeroImageProps;
+
+// Generate optimized hero image URLs for different screen sizes
+const generateHeroUrls = (baseSrc: string) => {
+  // For Contentful images, generate multiple sizes for responsive loading
+  if (baseSrc.includes('images.ctfassets.net') || baseSrc.includes('assets.ctfassets.net')) {
+    return {
+      mobile: `${baseSrc}?w=768&h=${Math.round((height / width) * 768)}&fit=fill&f=webp&q=85`,
+      tablet: `${baseSrc}?w=1024&h=${Math.round((height / width) * 1024)}&fit=fill&f=webp&q=85`,
+      desktop: `${baseSrc}?w=1200&h=${Math.round((height / width) * 1200)}&fit=fill&f=webp&q=85`,
+      large: `${baseSrc}?w=1600&h=${Math.round((height / width) * 1600)}&fit=fill&f=webp&q=85`,
+    };
+  }
+  
+  // For other images, return the original
+  return {
+    mobile: baseSrc,
+    tablet: baseSrc,
+    desktop: baseSrc,
+    large: baseSrc,
+  };
+};
+
+const heroUrls = generateHeroUrls(src);
+
+// Generate overlay classes
+const getOverlayClass = (color: string, opacity: number) => {
+  const colorMap: Record<string, string> = {
+    blue: 'from-blue-600',
+    purple: 'from-purple-600',
+    green: 'from-green-600',
+    red: 'from-red-600',
+    gray: 'from-gray-600',
+    indigo: 'from-indigo-600',
+  };
+  
+  const baseColor = colorMap[color] || colorMap.blue;
+  return `bg-gradient-to-tr ${baseColor}/${opacity} to-transparent`;
+};
+
+const overlayClass = overlay ? getOverlayClass(overlayColor, overlayOpacity) : '';
+
+// Generate responsive srcset and sizes
+const srcset = `
+  ${heroUrls.mobile} 768w,
+  ${heroUrls.tablet} 1024w,
+  ${heroUrls.desktop} 1200w,
+  ${heroUrls.large} 1600w
+`;
+
+const sizes = `
+  (max-width: 768px) 768px,
+  (max-width: 1024px) 1024px,
+  (max-width: 1200px) 1200px,
+  1600px
+`;
+
+// Ensure variables are used
+void heroUrls;
+void overlayClass;
+void srcset;
+void sizes;
+---
+
+<div class={`relative ${className}`}>
+  <!-- Hero Image with LCP Optimization -->
+  <img
+    src={heroUrls.desktop}
+    srcset={srcset.trim()}
+    sizes={sizes.trim()}
+    alt={alt}
+    width={width}
+    height={height}
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
+    class="w-full h-auto object-cover"
+  />
+  
+  <!-- Optional Overlay -->
+  {overlay && (
+    <div class={`absolute inset-0 ${overlayClass}`}></div>
+  )}
+  
+  <!-- Slot for content overlay -->
+  <slot />
+</div>
+
+<style>
+  /* Ensure hero image is optimized for LCP */
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Prevent layout shift by maintaining aspect ratio */
+  div {
+    contain: layout style;
+  }
+  
+  /* Optimize for Core Web Vitals */
+  img[fetchpriority="high"] {
+    /* Ensure high priority images are processed first */
+    content-visibility: auto;
+  }
+  
+  /* Smooth loading for hero images */
+  img {
+    transition: opacity 0.2s ease-in-out;
+  }
+</style>
+
+<script is:inline>
+  // Preload hero image for optimal LCP
+  document.addEventListener('DOMContentLoaded', () => {
+    const heroImages = document.querySelectorAll('img[fetchpriority="high"]');
+    
+    heroImages.forEach((img) => {
+      // Create preload link for hero image
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = img.src;
+      
+      // Add responsive preload hints
+      if (img.srcset) {
+        link.imageSrcset = img.srcset;
+        link.imageSizes = img.sizes || '100vw';
+      }
+      
+      document.head.appendChild(link);
+    });
+  });
+</script>

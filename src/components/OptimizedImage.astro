@@ -1,0 +1,155 @@
+---
+export interface OptimizedImageProps {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  loading?: 'eager' | 'lazy';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  sizes?: string;
+  className?: string;
+  caption?: string;
+  aspectRatio?: 'square' | '16:9' | '4:3' | '3:2' | 'auto';
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  loading = 'lazy',
+  fetchpriority = 'auto',
+  sizes,
+  className = '',
+  caption,
+  aspectRatio = 'auto',
+} = Astro.props as OptimizedImageProps;
+
+// Generate responsive image URLs if using a CDN that supports it
+const generateResponsiveUrls = (baseSrc: string, baseWidth: number) => {
+  // For Contentful images, we can add query parameters for different sizes
+  if (baseSrc.includes('images.ctfassets.net') || baseSrc.includes('assets.ctfassets.net')) {
+    return {
+      '1x': `${baseSrc}?w=${baseWidth}&h=${Math.round((height / width) * baseWidth)}&fit=fill&f=webp`,
+      '2x': `${baseSrc}?w=${baseWidth * 2}&h=${Math.round((height / width) * baseWidth * 2)}&fit=fill&f=webp`,
+    };
+  }
+  
+  // For other images, return the original
+  return {
+    '1x': baseSrc,
+    '2x': baseSrc,
+  };
+};
+
+const responsiveUrls = generateResponsiveUrls(src, width);
+
+// Generate aspect ratio classes
+const getAspectRatioClass = (ratio: string) => {
+  switch (ratio) {
+    case 'square':
+      return 'aspect-square';
+    case '16:9':
+      return 'aspect-video';
+    case '4:3':
+      return 'aspect-[4/3]';
+    case '3:2':
+      return 'aspect-[3/2]';
+    default:
+      return '';
+  }
+};
+
+const aspectRatioClass = getAspectRatioClass(aspectRatio);
+
+// Generate srcset for responsive images
+const srcset = `${responsiveUrls['1x']} 1x, ${responsiveUrls['2x']} 2x`;
+
+// Ensure variables are used
+void responsiveUrls;
+void aspectRatioClass;
+void srcset;
+---
+
+<figure class={`relative ${className}`}>
+  <div class={`relative overflow-hidden ${aspectRatioClass}`}>
+    <img
+      src={responsiveUrls['1x']}
+      srcset={srcset}
+      alt={alt}
+      width={width}
+      height={height}
+      loading={loading}
+      fetchpriority={fetchpriority}
+      sizes={sizes}
+      class={`w-full h-full object-cover ${aspectRatio === 'auto' ? 'h-auto' : ''}`}
+      decoding="async"
+    />
+  </div>
+  
+  {caption && (
+    <figcaption class="text-sm text-gray-500 text-center mt-3 italic">
+      {caption}
+    </figcaption>
+  )}
+</figure>
+
+<style>
+  /* Ensure images maintain aspect ratio and prevent layout shift */
+  img {
+    display: block;
+    max-width: 100%;
+  }
+  
+  /* Custom aspect ratios using Tailwind's aspect-ratio plugin */
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+  
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+  
+  .aspect-\[4\/3\] {
+    aspect-ratio: 4 / 3;
+  }
+  
+  .aspect-\[3\/2\] {
+    aspect-ratio: 3 / 2;
+  }
+  
+  /* Prevent cumulative layout shift by reserving space */
+  figure {
+    contain: layout style;
+  }
+  
+  /* Smooth loading transition */
+  img {
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  img[loading="lazy"] {
+    opacity: 0;
+  }
+  
+  img[loading="lazy"].loaded {
+    opacity: 1;
+  }
+</style>
+
+<script is:inline>
+  // Add loaded class when image loads to enable smooth transition
+  document.addEventListener('DOMContentLoaded', () => {
+    const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+    
+    lazyImages.forEach((img) => {
+      if (img.complete) {
+        img.classList.add('loaded');
+      } else {
+        img.addEventListener('load', () => {
+          img.classList.add('loaded');
+        });
+      }
+    });
+  });
+</script>

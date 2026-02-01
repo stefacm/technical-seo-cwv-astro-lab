@@ -1,0 +1,193 @@
+---
+import BaseLayout from '../components/BaseLayout.astro';
+import HydrationDemoComponent from '../components/HydrationDemo.astro';
+import InteractiveSearch from '../components/InteractiveSearch.astro';
+
+// SEO configuration for demo page - NOINDEX since it's a demo
+const seoProps = {
+  title: 'Hydration Strategy Demo - Technical SEO Lab',
+  description: 'Demonstration of different Astro hydration strategies for optimal Core Web Vitals.',
+  noindex: true,
+  nofollow: true,
+  canonical: '/hydration-demo',
+};
+---
+
+<BaseLayout seo={seoProps}>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">
+        Hydration Strategy Demo
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+        This page demonstrates different Astro hydration strategies and their impact on Core Web Vitals.
+        Each component shows when and how it gets hydrated with JavaScript.
+      </p>
+    </div>
+
+    <!-- Hydration Strategy Explanation -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-12">
+      <h2 class="text-2xl font-bold text-blue-900 mb-4">Understanding Hydration Strategies</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <h3 class="font-semibold text-blue-800 mb-2">client:load</h3>
+          <p class="text-blue-700">Hydrates immediately when the page loads. Use sparingly for critical interactive elements.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-blue-800 mb-2">client:idle</h3>
+          <p class="text-blue-700">Hydrates when the browser is idle. Good for non-critical interactive elements.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-blue-800 mb-2">client:visible</h3>
+          <p class="text-blue-700">Hydrates when the component enters the viewport. Ideal for below-the-fold content.</p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-blue-800 mb-2">client:media</h3>
+          <p class="text-blue-700">Hydrates when a media query matches. Perfect for responsive interactive features.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo Components Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+      <!-- client:load Demo -->
+      <HydrationDemoComponent 
+        title="Critical Interactive Element"
+        strategy="load"
+      />
+
+      <!-- client:idle Demo -->
+      <HydrationDemoComponent 
+        title="Non-Critical Interactive Element"
+        strategy="idle"
+      />
+
+      <!-- client:visible Demo -->
+      <HydrationDemoComponent 
+        title="Below-the-Fold Component"
+        strategy="visible"
+      />
+
+      <!-- client:media Demo -->
+      <HydrationDemoComponent 
+        title="Responsive Interactive Feature"
+        strategy="media"
+        mediaQuery="(min-width: 768px)"
+      />
+    </div>
+
+    <!-- Interactive Search Demo -->
+    <div class="bg-gray-50 rounded-lg p-8 mb-12">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4 text-center">
+        Interactive Search Component
+      </h2>
+      <p class="text-gray-600 text-center mb-6">
+        This search component uses <code class="bg-gray-200 px-2 py-1 rounded">client:visible</code> 
+        hydration strategy for optimal performance.
+      </p>
+      
+      <div class="max-w-2xl mx-auto">
+        <InteractiveSearch 
+          placeholder="Try searching for 'SEO' or 'performance'..."
+          hydrationStrategy="visible"
+          className="w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Performance Impact Explanation -->
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-12">
+      <h2 class="text-2xl font-bold text-green-900 mb-4">Core Web Vitals Impact</h2>
+      <div class="space-y-4 text-green-800">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <div>
+            <strong>Largest Contentful Paint (LCP):</strong> Selective hydration reduces initial JavaScript bundle size, 
+            allowing critical content to render faster.
+          </div>
+        </div>
+        
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <div>
+            <strong>Cumulative Layout Shift (CLS):</strong> Components maintain their server-rendered layout 
+            until hydration, preventing unexpected shifts.
+          </div>
+        </div>
+        
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <div>
+            <strong>Interaction to Next Paint (INP):</strong> Components become interactive only when needed, 
+            reducing main thread blocking and improving responsiveness.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Best Practices -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <h2 class="text-2xl font-bold text-yellow-900 mb-4">Best Practices</h2>
+      <ul class="space-y-3 text-yellow-800">
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Use <code class="bg-yellow-200 px-2 py-1 rounded">client:load</code> only for critical above-the-fold interactive elements</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Prefer <code class="bg-yellow-200 px-2 py-1 rounded">client:visible</code> for below-the-fold interactive components</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Use <code class="bg-yellow-200 px-2 py-1 rounded">client:idle</code> for non-critical enhancements</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Consider <code class="bg-yellow-200 px-2 py-1 rounded">client:media</code> for responsive features that only work on certain screen sizes</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="text-center mt-12">
+      <a 
+        href="/" 
+        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+      >
+        ← Back to Homepage
+      </a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Code styling */
+  code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+  }
+  
+  /* Smooth scrolling for better UX */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Ensure demo components are properly spaced */
+  .grid > * {
+    min-height: 200px;
+  }
+</style>

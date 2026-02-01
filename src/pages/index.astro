@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../components/BaseLayout.astro';
+import HeroImage from '../components/HeroImage.astro';
+import OptimizedImage from '../components/OptimizedImage.astro';
+import StableLayout from '../components/StableLayout.astro';
+import ReservedSpace from '../components/ReservedSpace.astro';
+import InteractiveSearch from '../components/InteractiveSearch.astro';
 import { createContentService } from '../lib/mocks.js';
 import { createSchemaGenerator } from '../lib/schemas.js';
 
@@ -36,7 +41,7 @@ void seo;
   <!-- Hero Section with LCP Optimization -->
   <section class="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-20 lg:py-32">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <StableLayout type="hero" gap="3rem" className="items-center">
         <div class="space-y-8">
           <h1 class="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
             Master Technical SEO & 
@@ -63,25 +68,43 @@ void seo;
         </div>
         
         <!-- Hero Image with LCP Optimization -->
-        <div class="relative">
-          <img 
+        <ReservedSpace width="100%" aspectRatio="3:2" className="max-w-2xl">
+          <HeroImage
             src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop"
             alt="Technical SEO and Core Web Vitals optimization dashboard"
-            width="600"
-            height="400"
-            loading="eager"
-            fetchpriority="high"
-            class="rounded-lg shadow-2xl w-full h-auto"
+            width={1200}
+            height={600}
+            className="rounded-lg shadow-2xl"
+            overlay={true}
+            overlayColor="blue"
+            overlayOpacity={20}
           />
-          <div class="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent rounded-lg"></div>
-        </div>
-      </div>
+        </ReservedSpace>
+      </StableLayout>
     </div>
   </section>
 
   <!-- Featured Content Section -->
   <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Search Section with Selective Hydration -->
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          Find What You're Looking For
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          Search through our comprehensive collection of technical SEO articles and guides.
+        </p>
+        
+        <div class="max-w-2xl mx-auto">
+          <InteractiveSearch 
+            placeholder="Search articles, guides, and topics..."
+            hydrationStrategy="visible"
+            className="w-full"
+          />
+        </div>
+      </div>
+
       <div class="text-center mb-16">
         <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
           Latest Insights & Guides
@@ -104,20 +127,19 @@ void seo;
           </a>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <StableLayout type="grid" columns={3} minItemWidth="300px" gap="2rem">
           {featuredPosts.map((post) => (
             <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
               {post.featuredImage && (
-                <div class="aspect-w-16 aspect-h-9">
-                  <img 
-                    src={post.featuredImage.fields.file.url}
-                    alt={post.featuredImage.fields.title}
-                    width={post.featuredImage.fields.file.details.image?.width || 400}
-                    height={post.featuredImage.fields.file.details.image?.height || 225}
-                    loading="lazy"
-                    class="w-full h-48 object-cover"
-                  />
-                </div>
+                <OptimizedImage
+                  src={post.featuredImage.fields.file.url}
+                  alt={post.featuredImage.fields.title}
+                  width={post.featuredImage.fields.file.details.image?.width || 400}
+                  height={post.featuredImage.fields.file.details.image?.height || 225}
+                  loading="lazy"
+                  aspectRatio="16:9"
+                  className="mb-0"
+                />
               )}
               
               <div class="p-6">
@@ -156,13 +178,14 @@ void seo;
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     {post.author.avatar && (
-                      <img 
+                      <OptimizedImage
                         src={post.author.avatar.fields.file.url}
                         alt={post.author.name}
-                        width="32"
-                        height="32"
+                        width={32}
+                        height={32}
                         loading="lazy"
-                        class="w-8 h-8 rounded-full"
+                        aspectRatio="square"
+                        className="w-8 h-8 rounded-full overflow-hidden"
                       />
                     )}
                     <span class="text-sm font-medium text-gray-900">
@@ -180,7 +203,7 @@ void seo;
               </div>
             </article>
           ))}
-        </div>
+        </StableLayout>
       </div>
 
       <!-- Featured Guides -->
@@ -195,7 +218,7 @@ void seo;
           </a>
         </div>
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <StableLayout type="grid" columns={2} minItemWidth="400px" gap="2rem">
           {featuredGuides.map((guide) => (
             <article class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-8 hover:shadow-lg transition-shadow">
               <div class="flex items-start justify-between mb-4">
@@ -255,7 +278,7 @@ void seo;
               </div>
             </article>
           ))}
-        </div>
+        </StableLayout>
       </div>
     </div>
   </section>
@@ -272,7 +295,7 @@ void seo;
         </p>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <StableLayout type="grid" columns={3} minItemWidth="280px" gap="2rem">
         <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
           <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,7 +332,7 @@ void seo;
             Leverage Astro's SSG for indexable content and SSR for dynamic features.
           </p>
         </div>
-      </div>
+      </StableLayout>
     </div>
   </section>
 </BaseLayout>

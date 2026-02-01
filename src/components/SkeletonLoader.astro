@@ -1,0 +1,173 @@
+---
+export interface SkeletonLoaderProps {
+  type: 'card' | 'article' | 'avatar' | 'text' | 'image' | 'custom';
+  className?: string;
+  width?: string;
+  height?: string;
+  lines?: number;
+  animated?: boolean;
+}
+
+const {
+  type,
+  className = '',
+  width = '100%',
+  height = 'auto',
+  lines = 3,
+  animated = true,
+} = Astro.props as SkeletonLoaderProps;
+
+// Generate skeleton classes based on type
+const getSkeletonClasses = (skeletonType: string) => {
+  const baseClasses = 'bg-gray-200 rounded';
+  const animationClass = animated ? 'animate-pulse' : '';
+  
+  switch (skeletonType) {
+    case 'card':
+      return `${baseClasses} ${animationClass}`;
+    case 'article':
+      return `${baseClasses} ${animationClass}`;
+    case 'avatar':
+      return `${baseClasses} ${animationClass} rounded-full`;
+    case 'text':
+      return `${baseClasses} ${animationClass} h-4`;
+    case 'image':
+      return `${baseClasses} ${animationClass}`;
+    default:
+      return `${baseClasses} ${animationClass}`;
+  }
+};
+
+const skeletonClasses = getSkeletonClasses(type);
+
+// Ensure variables are used
+void skeletonClasses;
+---
+
+{type === 'card' && (
+  <div class={`${className}`} style={`width: ${width}; height: ${height}`}>
+    <!-- Card Image Skeleton -->
+    <div class={`${skeletonClasses} aspect-video mb-4`}></div>
+    
+    <!-- Card Content Skeleton -->
+    <div class="space-y-3">
+      <!-- Title -->
+      <div class={`${skeletonClasses} h-6 w-3/4`}></div>
+      
+      <!-- Description lines -->
+      {Array.from({ length: lines }).map((_, index) => (
+        <div class={`${skeletonClasses} h-4 ${
+          index === lines - 1 ? 'w-1/2' : 'w-full'
+        }`}></div>
+      ))}
+      
+      <!-- Meta info -->
+      <div class="flex items-center gap-3 mt-4">
+        <div class={`${skeletonClasses} w-8 h-8 rounded-full`}></div>
+        <div class={`${skeletonClasses} h-4 w-24`}></div>
+      </div>
+    </div>
+  </div>
+)}
+
+{type === 'article' && (
+  <div class={`${className}`} style={`width: ${width}; height: ${height}`}>
+    <!-- Article Header Skeleton -->
+    <div class="space-y-4 mb-8">
+      <!-- Breadcrumbs -->
+      <div class="flex items-center gap-2">
+        <div class={`${skeletonClasses} h-4 w-16`}></div>
+        <div class={`${skeletonClasses} h-4 w-4`}></div>
+        <div class={`${skeletonClasses} h-4 w-20`}></div>
+      </div>
+      
+      <!-- Title -->
+      <div class={`${skeletonClasses} h-12 w-full mb-4`}></div>
+      <div class={`${skeletonClasses} h-12 w-3/4`}></div>
+      
+      <!-- Meta -->
+      <div class="flex items-center gap-4">
+        <div class={`${skeletonClasses} h-4 w-20`}></div>
+        <div class={`${skeletonClasses} h-4 w-24`}></div>
+      </div>
+    </div>
+    
+    <!-- Featured Image Skeleton -->
+    <div class={`${skeletonClasses} aspect-video mb-8`}></div>
+    
+    <!-- Content Skeleton -->
+    <div class="space-y-4">
+      {Array.from({ length: lines }).map(() => (
+        <div class={`${skeletonClasses} h-4 w-full`}></div>
+      ))}
+      <div class={`${skeletonClasses} h-4 w-2/3`}></div>
+    </div>
+  </div>
+)}
+
+{type === 'avatar' && (
+  <div 
+    class={`${skeletonClasses} ${className}`}
+    style={`width: ${width}; height: ${height}`}
+  ></div>
+)}
+
+{type === 'text' && (
+  <div class="space-y-2">
+    {Array.from({ length: lines }).map((_, index) => (
+      <div 
+        class={`${skeletonClasses} ${className} ${
+          index === lines - 1 ? 'w-2/3' : 'w-full'
+        }`}
+        style={`height: ${height}`}
+      ></div>
+    ))}
+  </div>
+)}
+
+{type === 'image' && (
+  <div 
+    class={`${skeletonClasses} ${className}`}
+    style={`width: ${width}; height: ${height}`}
+  ></div>
+)}
+
+{type === 'custom' && (
+  <div 
+    class={`${skeletonClasses} ${className}`}
+    style={`width: ${width}; height: ${height}`}
+  >
+    <slot />
+  </div>
+)}
+
+<style>
+  /* Ensure skeleton loaders prevent layout shift */
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  /* Prevent cumulative layout shift */
+  [class*="animate-pulse"] {
+    contain: layout style;
+  }
+  
+  /* Smooth transition when content loads */
+  .skeleton-container {
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  .skeleton-container.loaded {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>

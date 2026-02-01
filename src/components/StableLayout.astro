@@ -1,0 +1,207 @@
+---
+export interface StableLayoutProps {
+  type: 'grid' | 'flex' | 'stack' | 'sidebar' | 'hero';
+  className?: string;
+  gap?: string;
+  columns?: number;
+  minItemWidth?: string;
+  sidebarWidth?: string;
+  preventShift?: boolean;
+}
+
+const {
+  type,
+  className = '',
+  gap = '1rem',
+  columns = 3,
+  minItemWidth = '300px',
+  sidebarWidth = '300px',
+  preventShift = true,
+} = Astro.props as StableLayoutProps;
+
+// Generate layout-specific classes
+const getLayoutClasses = (layoutType: string) => {
+  switch (layoutType) {
+    case 'grid':
+      return `grid gap-[${gap}] grid-cols-1 md:grid-cols-2 lg:grid-cols-${columns}`;
+    case 'flex':
+      return `flex flex-wrap gap-[${gap}]`;
+    case 'stack':
+      return `space-y-[${gap}]`;
+    case 'sidebar':
+      return `flex flex-col lg:flex-row gap-[${gap}]`;
+    case 'hero':
+      return `grid grid-cols-1 lg:grid-cols-2 gap-[${gap}] items-center`;
+    default:
+      return '';
+  }
+};
+
+const layoutClasses = getLayoutClasses(type);
+
+// Generate CSS custom properties for dynamic values
+const cssVariables = {
+  '--gap': gap,
+  '--columns': columns.toString(),
+  '--min-item-width': minItemWidth,
+  '--sidebar-width': sidebarWidth,
+};
+
+const cssVarsString = Object.entries(cssVariables)
+  .map(([key, value]) => `${key}: ${value}`)
+  .join('; ');
+
+// Ensure variables are used
+void layoutClasses;
+void cssVarsString;
+---
+
+<div 
+  class={`stable-layout ${layoutClasses} ${className} ${preventShift ? 'prevent-shift' : ''}`}
+  style={cssVarsString}
+  data-layout-type={type}
+>
+  <slot />
+</div>
+
+<style>
+  /* Base stable layout styles */
+  .stable-layout {
+    contain: layout style;
+  }
+  
+  /* Prevent layout shift with stable dimensions */
+  .prevent-shift {
+    min-height: 0; /* Prevent flex/grid items from growing unexpectedly */
+  }
+  
+  /* Grid layout optimizations */
+  .stable-layout[data-layout-type="grid"] {
+    grid-template-columns: repeat(auto-fit, minmax(var(--min-item-width), 1fr));
+  }
+  
+  /* Flex layout optimizations */
+  .stable-layout[data-layout-type="flex"] > :global(*) {
+    flex: 1 1 var(--min-item-width);
+    min-width: 0; /* Prevent flex items from overflowing */
+  }
+  
+  /* Sidebar layout optimizations */
+  .stable-layout[data-layout-type="sidebar"] > :global(.sidebar) {
+    flex: 0 0 var(--sidebar-width);
+    min-width: var(--sidebar-width);
+  }
+  
+  .stable-layout[data-layout-type="sidebar"] > :global(.main-content) {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Hero layout optimizations */
+  .stable-layout[data-layout-type="hero"] {
+    min-height: 400px; /* Reserve minimum space for hero content */
+  }
+  
+  /* Stack layout optimizations */
+  .stable-layout[data-layout-type="stack"] > :global(*) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  
+  .stable-layout[data-layout-type="stack"] > :global(* + *) {
+    margin-top: var(--gap);
+  }
+  
+  /* Responsive adjustments that maintain stability */
+  @media (max-width: 768px) {
+    .stable-layout[data-layout-type="grid"] {
+      grid-template-columns: 1fr;
+    }
+    
+    .stable-layout[data-layout-type="sidebar"] {
+      flex-direction: column;
+    }
+    
+    .stable-layout[data-layout-type="sidebar"] > :global(.sidebar) {
+      flex: none;
+      width: 100%;
+    }
+    
+    .stable-layout[data-layout-type="hero"] {
+      grid-template-columns: 1fr;
+      min-height: 300px;
+    }
+  }
+  
+  /* Smooth transitions that don't cause layout shift */
+  .stable-layout * {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    /* Avoid transitions on layout properties */
+    transition-property: opacity, transform, color, background-color, border-color;
+  }
+  
+  /* Ensure images and media don't cause shifts */
+  .stable-layout :global(img),
+  .stable-layout :global(video),
+  .stable-layout :global(iframe) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Prevent text reflow shifts */
+  .stable-layout :global(p),
+  .stable-layout :global(h1),
+  .stable-layout :global(h2),
+  .stable-layout :global(h3),
+  .stable-layout :global(h4),
+  .stable-layout :global(h5),
+  .stable-layout :global(h6) {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+</style>
+
+<script is:inline>
+  // Monitor layout stability in development
+  if (import.meta.env.DEV) {
+    // Use PerformanceObserver to detect layout shifts
+    if ('PerformanceObserver' in window) {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
+            const stableLayouts = document.querySelectorAll('.stable-layout');
+            
+            stableLayouts.forEach((layout) => {
+              const rect = layout.getBoundingClientRect();
+              
+              // Check if the layout shift occurred within our stable layout
+              if (
+                entry.sources &&
+                entry.sources.some((source) => {
+                  const sourceRect = source.node?.getBoundingClientRect();
+                  return sourceRect &&
+                    sourceRect.left >= rect.left &&
+                    sourceRect.right <= rect.right &&
+                    sourceRect.top >= rect.top &&
+                    sourceRect.bottom <= rect.bottom;
+                })
+              ) {
+                console.warn(
+                  'Layout shift detected in stable layout:',
+                  layout,
+                  'CLS value:',
+                  entry.value,
+                  'Sources:',
+                  entry.sources
+                );
+              }
+            });
+          }
+        }
+      });
+      
+      observer.observe({ entryTypes: ['layout-shift'] });
+    }
+  }
+</script>

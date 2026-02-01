@@ -1,6 +1,7 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../components/BaseLayout.astro';
+import OptimizedImage from '../../components/OptimizedImage.astro';
 import type { BlogPost } from '../../lib/contentful.js';
 import { createContentService } from '../../lib/mocks.js';
 import { createSchemaGenerator } from '../../lib/schemas.js';
@@ -128,13 +129,14 @@ void seo;
       <!-- Author Info -->
       <div class="flex items-center gap-4 pb-8 border-b border-gray-200">
         {post.author.avatar && (
-          <img 
+          <OptimizedImage
             src={post.author.avatar.fields.file.url}
             alt={post.author.name}
-            width="64"
-            height="64"
+            width={64}
+            height={64}
             loading="lazy"
-            class="w-16 h-16 rounded-full"
+            aspectRatio="square"
+            className="w-16 h-16 rounded-full overflow-hidden"
           />
         )}
         <div>
@@ -189,21 +191,16 @@ void seo;
 
     <!-- Featured Image -->
     {post.featuredImage && (
-      <div class="mb-12">
-        <img 
-          src={post.featuredImage.fields.file.url}
-          alt={post.featuredImage.fields.title}
-          width={post.featuredImage.fields.file.details.image?.width || 800}
-          height={post.featuredImage.fields.file.details.image?.height || 400}
-          loading="lazy"
-          class="w-full h-auto rounded-lg shadow-lg"
-        />
-        {post.featuredImage.fields.description && (
-          <p class="text-sm text-gray-500 text-center mt-3 italic">
-            {post.featuredImage.fields.description}
-          </p>
-        )}
-      </div>
+      <OptimizedImage
+        src={post.featuredImage.fields.file.url}
+        alt={post.featuredImage.fields.title}
+        width={post.featuredImage.fields.file.details.image?.width || 800}
+        height={post.featuredImage.fields.file.details.image?.height || 400}
+        loading="lazy"
+        aspectRatio="auto"
+        className="mb-12 rounded-lg shadow-lg"
+        caption={post.featuredImage.fields.description}
+      />
     )}
 
     <!-- Article Content -->

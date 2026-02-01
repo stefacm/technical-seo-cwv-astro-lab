@@ -12,7 +12,7 @@
     "format": "biome format --write .",
     "test": "vitest --run",
     "test:unit": "vitest --run --reporter=verbose",
-    "test:pbt": "vitest --run --reporter=verbose --grep=\"Property\"",
+    "test:pbt": "vitest --run --reporter=verbose -t \"Property\"",
     "test:watch": "vitest"
   },
   "dependencies": {
