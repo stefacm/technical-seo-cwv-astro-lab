@@ -29,39 +29,109 @@ void className;
 </head>
 <body class={`min-h-screen flex flex-col ${className}`}>
   {showHeader && (
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50" role="banner">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center">
-            <a href="/" class="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors">
+            <a 
+              href="/" 
+              class="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
+              aria-label="Technical SEO Lab - Home"
+            >
               Technical SEO Lab
             </a>
           </div>
-          <nav class="hidden md:flex space-x-8">
-            <a href="/" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+          <nav class="hidden md:flex space-x-8" role="navigation" aria-label="Main navigation">
+            <a 
+              href="/" 
+              class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+              aria-current={Astro.url.pathname === '/' ? 'page' : undefined}
+            >
               Home
             </a>
-            <a href="/blog" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+            <a 
+              href="/blog" 
+              class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+              aria-current={Astro.url.pathname.startsWith('/blog') ? 'page' : undefined}
+            >
               Blog
             </a>
-            <a href="/guides" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+            <a 
+              href="/guides" 
+              class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+              aria-current={Astro.url.pathname.startsWith('/guides') ? 'page' : undefined}
+            >
               Guides
             </a>
-            <a href="/faq" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">
+            <a 
+              href="/faq" 
+              class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+              aria-current={Astro.url.pathname === '/faq' ? 'page' : undefined}
+            >
               FAQ
             </a>
           </nav>
+          
+          <!-- Mobile menu button -->
+          <button 
+            class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            aria-label="Toggle main menu"
+            id="mobile-menu-button"
+          >
+            <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg class="hidden h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div class="md:hidden hidden" id="mobile-menu">
+          <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+            <a 
+              href="/" 
+              class="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
+              aria-current={Astro.url.pathname === '/' ? 'page' : undefined}
+            >
+              Home
+            </a>
+            <a 
+              href="/blog" 
+              class="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
+              aria-current={Astro.url.pathname.startsWith('/blog') ? 'page' : undefined}
+            >
+              Blog
+            </a>
+            <a 
+              href="/guides" 
+              class="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
+              aria-current={Astro.url.pathname.startsWith('/guides') ? 'page' : undefined}
+            >
+              Guides
+            </a>
+            <a 
+              href="/faq" 
+              class="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
+              aria-current={Astro.url.pathname === '/faq' ? 'page' : undefined}
+            >
+              FAQ
+            </a>
+          </div>
         </div>
       </div>
     </header>
   )}
 
-  <main class="flex-1">
+  <main class="flex-1" role="main">
     <slot />
   </main>
 
   {showFooter && (
-    <footer class="bg-gray-50 border-t border-gray-200">
+    <footer class="bg-gray-50 border-t border-gray-200" role="contentinfo">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div class="col-span-1 md:col-span-2">
@@ -72,7 +142,7 @@ void className;
             </p>
           </div>
           
-          <div>
+          <nav aria-label="Footer navigation - Content">
             <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
               Content
             </h4>
@@ -93,9 +163,9 @@ void className;
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
           
-          <div>
+          <nav aria-label="Footer navigation - Resources">
             <h4 class="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
               Resources
             </h4>
@@ -111,7 +181,7 @@ void className;
                 </a>
               </li>
             </ul>
-          </div>
+          </nav>
         </div>
         
         <div class="border-t border-gray-200 pt-8 mt-8">
@@ -122,5 +192,51 @@ void className;
       </div>
     </footer>
   )}
+
+  <script>
+    // Mobile menu toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+          const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+          
+          // Toggle menu visibility
+          mobileMenu.classList.toggle('hidden');
+          
+          // Update aria-expanded
+          mobileMenuButton.setAttribute('aria-expanded', (!isExpanded).toString());
+          
+          // Toggle icons
+          const openIcon = mobileMenuButton.querySelector('svg:first-child');
+          const closeIcon = mobileMenuButton.querySelector('svg:last-child');
+          
+          if (openIcon && closeIcon) {
+            openIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('hidden');
+          }
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+          const target = event.target as Element;
+          if (!mobileMenuButton.contains(target) && !mobileMenu.contains(target)) {
+            mobileMenu.classList.add('hidden');
+            mobileMenuButton.setAttribute('aria-expanded', 'false');
+            
+            const openIcon = mobileMenuButton.querySelector('svg:first-child');
+            const closeIcon = mobileMenuButton.querySelector('svg:last-child');
+            
+            if (openIcon && closeIcon) {
+              openIcon.classList.remove('hidden');
+              closeIcon.classList.add('hidden');
+            }
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

@@ -129,7 +129,7 @@ void seo;
         
         <StableLayout type="grid" columns={3} minItemWidth="300px" gap="2rem">
           {featuredPosts.map((post) => (
-            <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+            <article class="bg-white rounded-lg shadow-md hover-lift overflow-hidden reserve-card">
               {post.featuredImage && (
                 <OptimizedImage
                   src={post.featuredImage.fields.file.url}
@@ -138,14 +138,14 @@ void seo;
                   height={post.featuredImage.fields.file.details.image?.height || 225}
                   loading="lazy"
                   aspectRatio="16:9"
-                  className="mb-0"
+                  className="mb-0 img-stable"
                 />
               )}
               
               <div class="p-6">
                 <div class="flex items-center gap-2 mb-3">
                   <span 
-                    class="inline-block px-3 py-1 text-xs font-medium rounded-full text-white"
+                    class="inline-block px-3 py-1 text-xs font-medium rounded-full text-white animate-colors"
                     style={`background-color: ${post.category.color}`}
                   >
                     {post.category.name}
@@ -162,16 +162,16 @@ void seo;
                   </time>
                 </div>
                 
-                <h4 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                <h4 class="text-xl font-bold text-gray-900 mb-3 text-clamp-2">
                   <a 
                     href={`/blog/${post.slug}`}
-                    class="hover:text-blue-600 transition-colors"
+                    class="hover:text-blue-600 animate-colors focus-visible"
                   >
                     {post.title}
                   </a>
                 </h4>
                 
-                <p class="text-gray-600 mb-4 line-clamp-3">
+                <p class="text-gray-600 mb-4 text-clamp-3 text-stable">
                   {post.excerpt}
                 </p>
                 
@@ -185,7 +185,7 @@ void seo;
                         height={32}
                         loading="lazy"
                         aspectRatio="square"
-                        className="w-8 h-8 rounded-full overflow-hidden"
+                        className="w-8 h-8 rounded-full overflow-hidden img-fixed"
                       />
                     )}
                     <span class="text-sm font-medium text-gray-900">
@@ -195,7 +195,7 @@ void seo;
                   
                   <a 
                     href={`/blog/${post.slug}`}
-                    class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                    class="text-blue-600 hover:text-blue-700 font-medium text-sm animate-colors focus-visible"
                   >
                     Read more →
                   </a>
@@ -220,16 +220,16 @@ void seo;
         
         <StableLayout type="grid" columns={2} minItemWidth="400px" gap="2rem">
           {featuredGuides.map((guide) => (
-            <article class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-8 hover:shadow-lg transition-shadow">
+            <article class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-8 hover-lift reserve-card">
               <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
                   <span 
-                    class="inline-block px-3 py-1 text-xs font-medium rounded-full text-white"
+                    class="inline-block px-3 py-1 text-xs font-medium rounded-full text-white animate-colors"
                     style={`background-color: ${guide.category.color}`}
                   >
                     {guide.category.name}
                   </span>
-                  <span class={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                  <span class={`inline-block px-3 py-1 text-xs font-medium rounded-full animate-colors ${
                     guide.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
                     guide.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-red-100 text-red-800'
@@ -245,20 +245,20 @@ void seo;
               <h4 class="text-2xl font-bold text-gray-900 mb-3">
                 <a 
                   href={`/guides/${guide.slug}`}
-                  class="hover:text-blue-600 transition-colors"
+                  class="hover:text-blue-600 animate-colors focus-visible"
                 >
                   {guide.title}
                 </a>
               </h4>
               
-              <p class="text-gray-600 mb-6">
+              <p class="text-gray-600 mb-6 text-stable">
                 {guide.description}
               </p>
               
               <div class="flex items-center justify-between">
                 <div class="flex flex-wrap gap-2">
                   {guide.tools.slice(0, 3).map((tool) => (
-                    <span class="inline-block px-2 py-1 bg-white text-gray-700 text-xs rounded border">
+                    <span class="inline-block px-2 py-1 bg-white text-gray-700 text-xs rounded border animate-colors">
                       {tool}
                     </span>
                   ))}
@@ -271,7 +271,7 @@ void seo;
                 
                 <a 
                   href={`/guides/${guide.slug}`}
-                  class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                  class="text-blue-600 hover:text-blue-700 font-medium text-sm animate-colors focus-visible"
                 >
                   Start guide →
                 </a>
@@ -296,39 +296,39 @@ void seo;
       </div>
       
       <StableLayout type="grid" columns={3} minItemWidth="280px" gap="2rem">
-        <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
-          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+        <div class="bg-white rounded-lg p-8 shadow-sm hover-lift">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6 reserve-space">
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-3">Core Web Vitals</h3>
-          <p class="text-gray-600">
+          <p class="text-gray-600 text-stable">
             Optimize LCP, CLS, and FID metrics for better user experience and search rankings.
           </p>
         </div>
         
-        <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
-          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+        <div class="bg-white rounded-lg p-8 shadow-sm hover-lift">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6 reserve-space">
             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-3">Structured Data</h3>
-          <p class="text-gray-600">
+          <p class="text-gray-600 text-stable">
             Implement Schema.org markup for rich snippets and better search engine understanding.
           </p>
         </div>
         
-        <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
-          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+        <div class="bg-white rounded-lg p-8 shadow-sm hover-lift">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6 reserve-space">
             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-3">Hybrid Rendering</h3>
-          <p class="text-gray-600">
+          <p class="text-gray-600 text-stable">
             Leverage Astro's SSG for indexable content and SSR for dynamic features.
           </p>
         </div>
@@ -338,31 +338,19 @@ void seo;
 </BaseLayout>
 
 <style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* Additional responsive design patterns using CLS-safe utilities */
+  @media (max-width: 640px) {
+    .stable-layout[data-layout-type="hero"] {
+      min-height: 300px;
+    }
   }
   
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* Ensure smooth content loading */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
   }
   
-  .aspect-w-16 {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
-  }
-  
-  .aspect-w-16 img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
   }
 </style>
