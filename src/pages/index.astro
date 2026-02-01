@@ -1,0 +1,345 @@
+---
+import BaseLayout from '../components/BaseLayout.astro';
+import { createContentService } from '../lib/mocks.js';
+import { createSchemaGenerator } from '../lib/schemas.js';
+
+// Fetch featured content for homepage
+const contentService = createContentService();
+const schemaGenerator = createSchemaGenerator();
+
+// Get featured blog posts and guides
+const featuredPosts = await contentService.getBlogPosts(3);
+const featuredGuides = await contentService.getGuides(2);
+
+// Generate structured data for homepage
+const organizationSchema = schemaGenerator.generateOrganizationSchema();
+const websiteSchema = schemaGenerator.generateWebSiteSchema();
+
+// SEO configuration for homepage
+const seo = {
+  title: 'Technical SEO CWV Astro Lab - Advanced SEO & Performance Optimization',
+  description:
+    'Master technical SEO and Core Web Vitals optimization with Astro and Contentful. Production-grade examples, guides, and best practices for modern web applications.',
+  canonical: '/',
+  ogType: 'website' as const,
+  ogImage: '/images/hero-seo-lab.jpg',
+  structuredData: [organizationSchema, websiteSchema],
+};
+
+// Variables used in template below
+void featuredPosts;
+void featuredGuides;
+void seo;
+---
+
+<BaseLayout seo={seo}>
+  <!-- Hero Section with LCP Optimization -->
+  <section class="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-20 lg:py-32">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="space-y-8">
+          <h1 class="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            Master Technical SEO & 
+            <span class="text-blue-600">Core Web Vitals</span>
+          </h1>
+          <p class="text-xl text-gray-600 leading-relaxed">
+            Production-grade demonstration of advanced technical SEO and Core Web Vitals optimization 
+            using Astro's hybrid rendering with Contentful as a headless CMS.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a 
+              href="/blog" 
+              class="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Explore Blog Posts
+            </a>
+            <a 
+              href="/guides" 
+              class="inline-flex items-center justify-center px-8 py-4 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              View Guides
+            </a>
+          </div>
+        </div>
+        
+        <!-- Hero Image with LCP Optimization -->
+        <div class="relative">
+          <img 
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=600&fit=crop"
+            alt="Technical SEO and Core Web Vitals optimization dashboard"
+            width="600"
+            height="400"
+            loading="eager"
+            fetchpriority="high"
+            class="rounded-lg shadow-2xl w-full h-auto"
+          />
+          <div class="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent rounded-lg"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Content Section -->
+  <section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          Latest Insights & Guides
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Discover the latest techniques in technical SEO, Core Web Vitals optimization, 
+          and modern web development best practices.
+        </p>
+      </div>
+
+      <!-- Featured Blog Posts -->
+      <div class="mb-20">
+        <div class="flex items-center justify-between mb-8">
+          <h3 class="text-2xl font-bold text-gray-900">Featured Articles</h3>
+          <a 
+            href="/blog" 
+            class="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+          >
+            View all articles →
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {featuredPosts.map((post) => (
+            <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+              {post.featuredImage && (
+                <div class="aspect-w-16 aspect-h-9">
+                  <img 
+                    src={post.featuredImage.fields.file.url}
+                    alt={post.featuredImage.fields.title}
+                    width={post.featuredImage.fields.file.details.image?.width || 400}
+                    height={post.featuredImage.fields.file.details.image?.height || 225}
+                    loading="lazy"
+                    class="w-full h-48 object-cover"
+                  />
+                </div>
+              )}
+              
+              <div class="p-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <span 
+                    class="inline-block px-3 py-1 text-xs font-medium rounded-full text-white"
+                    style={`background-color: ${post.category.color}`}
+                  >
+                    {post.category.name}
+                  </span>
+                  <time 
+                    datetime={post.publishedAt}
+                    class="text-sm text-gray-500"
+                  >
+                    {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </time>
+                </div>
+                
+                <h4 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                  <a 
+                    href={`/blog/${post.slug}`}
+                    class="hover:text-blue-600 transition-colors"
+                  >
+                    {post.title}
+                  </a>
+                </h4>
+                
+                <p class="text-gray-600 mb-4 line-clamp-3">
+                  {post.excerpt}
+                </p>
+                
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    {post.author.avatar && (
+                      <img 
+                        src={post.author.avatar.fields.file.url}
+                        alt={post.author.name}
+                        width="32"
+                        height="32"
+                        loading="lazy"
+                        class="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <span class="text-sm font-medium text-gray-900">
+                      {post.author.name}
+                    </span>
+                  </div>
+                  
+                  <a 
+                    href={`/blog/${post.slug}`}
+                    class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                  >
+                    Read more →
+                  </a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <!-- Featured Guides -->
+      <div>
+        <div class="flex items-center justify-between mb-8">
+          <h3 class="text-2xl font-bold text-gray-900">Featured Guides</h3>
+          <a 
+            href="/guides" 
+            class="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+          >
+            View all guides →
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {featuredGuides.map((guide) => (
+            <article class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-8 hover:shadow-lg transition-shadow">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                  <span 
+                    class="inline-block px-3 py-1 text-xs font-medium rounded-full text-white"
+                    style={`background-color: ${guide.category.color}`}
+                  >
+                    {guide.category.name}
+                  </span>
+                  <span class={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                    guide.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
+                    guide.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {guide.difficulty}
+                  </span>
+                </div>
+                <span class="text-sm text-gray-500">
+                  {guide.estimatedTime} min read
+                </span>
+              </div>
+              
+              <h4 class="text-2xl font-bold text-gray-900 mb-3">
+                <a 
+                  href={`/guides/${guide.slug}`}
+                  class="hover:text-blue-600 transition-colors"
+                >
+                  {guide.title}
+                </a>
+              </h4>
+              
+              <p class="text-gray-600 mb-6">
+                {guide.description}
+              </p>
+              
+              <div class="flex items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                  {guide.tools.slice(0, 3).map((tool) => (
+                    <span class="inline-block px-2 py-1 bg-white text-gray-700 text-xs rounded border">
+                      {tool}
+                    </span>
+                  ))}
+                  {guide.tools.length > 3 && (
+                    <span class="text-xs text-gray-500">
+                      +{guide.tools.length - 3} more
+                    </span>
+                  )}
+                </div>
+                
+                <a 
+                  href={`/guides/${guide.slug}`}
+                  class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                >
+                  Start guide →
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          Why Technical SEO Matters
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Learn the key principles that make websites rank higher and perform better.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Core Web Vitals</h3>
+          <p class="text-gray-600">
+            Optimize LCP, CLS, and FID metrics for better user experience and search rankings.
+          </p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Structured Data</h3>
+          <p class="text-gray-600">
+            Implement Schema.org markup for rich snippets and better search engine understanding.
+          </p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Hybrid Rendering</h3>
+          <p class="text-gray-600">
+            Leverage Astro's SSG for indexable content and SSR for dynamic features.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .aspect-w-16 {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  }
+  
+  .aspect-w-16 img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

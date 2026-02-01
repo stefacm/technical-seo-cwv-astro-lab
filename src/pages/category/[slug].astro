@@ -1,0 +1,456 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../components/BaseLayout.astro';
+import type { Category } from '../../lib/contentful.js';
+import { createContentService } from '../../lib/mocks.js';
+import { createSchemaGenerator } from '../../lib/schemas.js';
+
+// Generate static paths for all categories
+export const getStaticPaths: GetStaticPaths = async () => {
+  const contentService = createContentService();
+  const categories = await contentService.getCategories();
+
+  return categories.map((category) => ({
+    params: { slug: category.slug },
+    props: { category },
+  }));
+};
+
+// Get the category from props
+const { category } = Astro.props as { category: Category };
+
+// Fetch content for this category
+const contentService = createContentService();
+const [blogPosts, guides] = await Promise.all([
+  contentService.getBlogPosts(50), // Get more posts to filter by category
+  contentService.getGuides(50), // Get more guides to filter by category
+]);
+
+// Filter content by category
+const categoryBlogPosts = blogPosts.filter((post) => post.category.slug === category.slug);
+const categoryGuides = guides.filter((guide) => guide.category.slug === category.slug);
+
+// Generate structured data for category page
+const schemaGenerator = createSchemaGenerator();
+const organizationSchema = schemaGenerator.generateOrganizationSchema();
+
+// Generate breadcrumbs
+const breadcrumbs = [
+  { name: 'Home', url: '/' },
+  { name: 'Categories', url: '/categories' },
+  { name: category.name, url: `/category/${category.slug}` },
+];
+
+// SEO configuration for category page
+const seo = {
+  title: `${category.name} - Technical SEO Lab`,
+  description: `Explore ${category.name.toLowerCase()} articles and guides. ${category.description}`,
+  canonical: `/category/${category.slug}`,
+  ogType: 'website' as const,
+  ogImage: category.featuredImage?.fields.file.url || '/images/default-og.jpg',
+  structuredData: organizationSchema,
+  breadcrumbs,
+};
+
+// Pagination settings
+const ITEMS_PER_PAGE = 12;
+const totalItems = categoryBlogPosts.length + categoryGuides.length;
+const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+// For now, show all items (pagination would be implemented with query parameters)
+const currentPage = 1;
+const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+const endIndex = startIndex + ITEMS_PER_PAGE;
+
+// Combine and sort content by published date
+const allContent = [
+  ...categoryBlogPosts.map((post) => ({ ...post, type: 'blog' as const })),
+  ...categoryGuides.map((guide) => ({ ...guide, type: 'guide' as const })),
+].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+const paginatedContent = allContent.slice(startIndex, endIndex);
+
+// Variables used in template below
+void totalPages;
+void paginatedContent;
+void seo;
+---
+
+<BaseLayout seo={seo}>
+  <!-- Category Header -->
+  <div class="bg-gradient-to-br from-gray-50 to-gray-100 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Breadcrumb Navigation -->
+      <nav class="mb-8" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+          {breadcrumbs.map((crumb, index) => (
+            <li class="flex items-center">
+              {index > 0 && (
+                <svg class="w-4 h-4 mx-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              )}
+              {index === breadcrumbs.length - 1 ? (
+                <span class="font-medium text-gray-900" aria-current="page">
+                  {crumb.name}
+                </span>
+              ) : (
+                <a href={crumb.url} class="hover:text-gray-700 transition-colors">
+                  {crumb.name}
+                </a>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <!-- Category Badge -->
+          <div class="mb-6">
+            <span 
+              class="inline-block px-4 py-2 text-lg font-semibold rounded-full text-white"
+              style={`background-color: ${category.color}`}
+            >
+              {category.name}
+            </span>
+          </div>
+
+          <!-- Category Title -->
+          <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
+            {category.name}
+          </h1>
+
+          <!-- Category Description -->
+          <p class="text-xl text-gray-600 leading-relaxed mb-8">
+            {category.description}
+          </p>
+
+          <!-- Content Stats -->
+          <div class="flex items-center gap-8 text-sm text-gray-500">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+              </svg>
+              <span>{categoryBlogPosts.length} Articles</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span>{categoryGuides.length} Guides</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Featured Image -->
+        {category.featuredImage && (
+          <div class="relative">
+            <img 
+              src={category.featuredImage.fields.file.url}
+              alt={category.featuredImage.fields.title}
+              width={category.featuredImage.fields.file.details.image?.width || 600}
+              height={category.featuredImage.fields.file.details.image?.height || 400}
+              loading="eager"
+              fetchpriority="high"
+              class="rounded-lg shadow-2xl w-full h-auto"
+            />
+            <div 
+              class="absolute inset-0 bg-gradient-to-tr from-opacity-20 to-transparent rounded-lg"
+              style={`background: linear-gradient(135deg, ${category.color}20 0%, transparent 100%)`}
+            ></div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Listing -->
+  <section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Content Filter Tabs -->
+      <div class="mb-12">
+        <div class="border-b border-gray-200">
+          <nav class="-mb-px flex space-x-8" aria-label="Content types">
+            <button 
+              class="content-filter-tab active border-b-2 py-2 px-1 text-sm font-medium transition-colors"
+              style={`border-color: ${category.color}; color: ${category.color}`}
+              data-filter="all"
+            >
+              All Content ({totalItems})
+            </button>
+            <button 
+              class="content-filter-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-2 px-1 text-sm font-medium transition-colors"
+              data-filter="blog"
+            >
+              Articles ({categoryBlogPosts.length})
+            </button>
+            <button 
+              class="content-filter-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 py-2 px-1 text-sm font-medium transition-colors"
+              data-filter="guide"
+            >
+              Guides ({categoryGuides.length})
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {paginatedContent.map((item) => (
+          <article class={`content-item bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden ${item.type}`}>
+            {/* Content Type Badge */}
+            <div class="absolute top-4 left-4 z-10">
+              <span class={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                item.type === 'blog' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-purple-100 text-purple-800'
+              }`}>
+                {item.type === 'blog' ? 'Article' : 'Guide'}
+              </span>
+            </div>
+
+            {/* Featured Image */}
+            {item.featuredImage && (
+              <div class="relative aspect-w-16 aspect-h-9">
+                <img 
+                  src={item.featuredImage.fields.file.url}
+                  alt={item.featuredImage.fields.title}
+                  width={item.featuredImage.fields.file.details.image?.width || 400}
+                  height={item.featuredImage.fields.file.details.image?.height || 225}
+                  loading="lazy"
+                  class="w-full h-48 object-cover"
+                />
+              </div>
+            )}
+            
+            <div class="p-6">
+              {/* Meta Information */}
+              <div class="flex items-center gap-2 mb-3">
+                {item.type === 'guide' && 'difficulty' in item && (
+                  <span class={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                    item.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
+                    item.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {item.difficulty}
+                  </span>
+                )}
+                {item.type === 'guide' && 'estimatedTime' in item && (
+                  <span class="text-xs text-gray-500">
+                    {item.estimatedTime} min
+                  </span>
+                )}
+                <time 
+                  datetime={item.publishedAt}
+                  class="text-xs text-gray-500"
+                >
+                  {new Date(item.publishedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </time>
+              </div>
+              
+              {/* Title */}
+              <h3 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                <a 
+                  href={`/${item.type === 'blog' ? 'blog' : 'guides'}/${item.slug}`}
+                  class="hover:text-blue-600 transition-colors"
+                >
+                  {item.title}
+                </a>
+              </h3>
+              
+              {/* Description/Excerpt */}
+              <p class="text-gray-600 mb-4 line-clamp-3">
+                {item.type === 'blog' ? item.excerpt : item.description}
+              </p>
+              
+              {/* Footer */}
+              <div class="flex items-center justify-between">
+                {item.type === 'blog' && 'author' in item && (
+                  <div class="flex items-center gap-2">
+                    {item.author.avatar && (
+                      <img 
+                        src={item.author.avatar.fields.file.url}
+                        alt={item.author.name}
+                        width="24"
+                        height="24"
+                        loading="lazy"
+                        class="w-6 h-6 rounded-full"
+                      />
+                    )}
+                    <span class="text-sm text-gray-700">
+                      {item.author.name}
+                    </span>
+                  </div>
+                )}
+                
+                {item.type === 'guide' && 'tools' in item && item.tools.length > 0 && (
+                  <div class="flex flex-wrap gap-1">
+                    {item.tools.slice(0, 2).map((tool) => (
+                      <span class="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                        {tool}
+                      </span>
+                    ))}
+                    {item.tools.length > 2 && (
+                      <span class="text-xs text-gray-500">
+                        +{item.tools.length - 2}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                <a 
+                  href={`/${item.type === 'blog' ? 'blog' : 'guides'}/${item.slug}`}
+                  class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                >
+                  {item.type === 'blog' ? 'Read more' : 'Start guide'} →
+                </a>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {paginatedContent.length === 0 && (
+        <div class="text-center py-16">
+          <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No content found</h3>
+          <p class="text-gray-500">
+            There's no content in the {category.name} category yet. Check back soon!
+          </p>
+        </div>
+      )}
+
+      {/* Pagination (placeholder for future implementation) */}
+      {totalPages > 1 && (
+        <div class="mt-16 flex justify-center">
+          <nav class="flex items-center gap-2" aria-label="Pagination">
+            <span class="px-3 py-2 text-sm text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+          </nav>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Related Categories -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">
+        Explore Other Categories
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Placeholder for other categories - would be populated with actual categories -->
+        <div class="bg-white rounded-lg p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Performance</h3>
+          <p class="text-gray-600 text-sm">Core Web Vitals optimization</p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Technical SEO</h3>
+          <p class="text-gray-600 text-sm">Advanced SEO techniques</p>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Astro Framework</h3>
+          <p class="text-gray-600 text-sm">Modern web development</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .aspect-w-16 {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  }
+  
+  .aspect-w-16 img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .content-item {
+    position: relative;
+  }
+  
+  /* Content filtering styles (would be enhanced with JavaScript) */
+  .content-filter-tab.active {
+    border-color: currentColor;
+  }
+  
+  .content-item.hidden {
+    display: none;
+  }
+</style>
+
+<script>
+  // Simple content filtering (client-side enhancement)
+  document.addEventListener('DOMContentLoaded', function() {
+    const filterTabs = document.querySelectorAll('.content-filter-tab');
+    const contentItems = document.querySelectorAll('.content-item');
+    
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', function(this: HTMLButtonElement) {
+        const filter = this.dataset.filter;
+        
+        // Update active tab
+        filterTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Filter content
+        contentItems.forEach(item => {
+          if (filter === 'all' || item.classList.contains(filter || '')) {
+            item.classList.remove('hidden');
+          } else {
+            item.classList.add('hidden');
+          }
+        });
+      });
+    });
+  });
+</script>

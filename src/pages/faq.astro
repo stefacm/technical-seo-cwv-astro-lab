@@ -1,0 +1,397 @@
+---
+import BaseLayout from '../components/BaseLayout.astro';
+import { createContentService } from '../lib/mocks.js';
+import { createSchemaGenerator } from '../lib/schemas.js';
+
+// Fetch FAQ entries
+const contentService = createContentService();
+const faqEntries = await contentService.getFaqEntries();
+
+// Generate structured data for FAQ page
+const schemaGenerator = createSchemaGenerator();
+const faqPageSchema = schemaGenerator.generateFAQPageSchema(faqEntries);
+
+// Group FAQ entries by category
+const faqByCategory = faqEntries.reduce(
+  (acc, faq) => {
+    if (!acc[faq.category]) {
+      acc[faq.category] = [];
+    }
+    acc[faq.category].push(faq);
+    return acc;
+  },
+  {} as Record<string, typeof faqEntries>
+);
+
+// Get unique categories for navigation
+const categories = Object.keys(faqByCategory).sort();
+
+// Generate breadcrumbs
+const breadcrumbs = [
+  { name: 'Home', url: '/' },
+  { name: 'FAQ', url: '/faq' },
+];
+
+// SEO configuration for FAQ page
+const seo = {
+  title: 'Frequently Asked Questions - Technical SEO Lab',
+  description:
+    'Find answers to common questions about technical SEO, Core Web Vitals, Astro framework, and web performance optimization.',
+  canonical: '/faq',
+  ogType: 'website' as const,
+  ogImage: '/images/faq-og.jpg',
+  structuredData: faqPageSchema,
+  breadcrumbs,
+};
+
+// Variables used in template below
+void categories;
+void seo;
+---
+
+<BaseLayout seo={seo}>
+  <!-- FAQ Header -->
+  <div class="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <!-- Breadcrumb Navigation -->
+      <nav class="mb-8" aria-label="Breadcrumb">
+        <ol class="flex items-center justify-center space-x-2 text-sm text-gray-500">
+          {breadcrumbs.map((crumb, index) => (
+            <li class="flex items-center">
+              {index > 0 && (
+                <svg class="w-4 h-4 mx-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              )}
+              {index === breadcrumbs.length - 1 ? (
+                <span class="font-medium text-gray-900" aria-current="page">
+                  {crumb.name}
+                </span>
+              ) : (
+                <a href={crumb.url} class="hover:text-gray-700 transition-colors">
+                  {crumb.name}
+                </a>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-6">
+        Frequently Asked Questions
+      </h1>
+      
+      <p class="text-xl text-gray-600 leading-relaxed mb-8 max-w-3xl mx-auto">
+        Find answers to common questions about technical SEO, Core Web Vitals optimization, 
+        and modern web development best practices.
+      </p>
+
+      <!-- FAQ Stats -->
+      <div class="flex items-center justify-center gap-8 text-sm text-gray-500">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{faqEntries.length} Questions</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          <span>{categories.length} Categories</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Content -->
+  <section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Category Navigation -->
+      {categories.length > 1 && (
+        <div class="mb-12">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Jump to Category</h2>
+          <div class="flex flex-wrap gap-3">
+            {categories.map((category) => (
+              <a 
+                href={`#category-${category.toLowerCase().replace(/\s+/g, '-')}`}
+                class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 text-sm font-medium rounded-lg hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                {category}
+                <span class="ml-2 text-blue-600">
+                  ({faqByCategory[category].length})
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- FAQ Sections by Category -->
+      {categories.map((category, categoryIndex) => (
+        <div 
+          class={`mb-16 ${categoryIndex > 0 ? 'pt-8 border-t border-gray-200' : ''}`}
+          id={`category-${category.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          <h2 class="text-2xl font-bold text-gray-900 mb-8">
+            {category}
+          </h2>
+          
+          <div class="space-y-6">
+            {faqByCategory[category].map((faq, index) => (
+              <div class="faq-item bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <button 
+                  class="faq-toggle w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset rounded-lg"
+                  aria-expanded="false"
+                  aria-controls={`faq-answer-${categoryIndex}-${index}`}
+                >
+                  <h3 class="text-lg font-semibold text-gray-900 pr-4">
+                    {faq.question}
+                  </h3>
+                  <div class="faq-icon flex-shrink-0 w-6 h-6 text-gray-400 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+                
+                <div 
+                  class="faq-answer hidden px-6 pb-6"
+                  id={`faq-answer-${categoryIndex}-${index}`}
+                >
+                  <div class="prose prose-gray max-w-none">
+                    <div set:html={faq.answer.replace(/\n/g, '<br>')} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <!-- Contact Section -->
+      <div class="mt-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-8 text-center">
+        <div class="max-w-2xl mx-auto">
+          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            Still have questions?
+          </h3>
+          
+          <p class="text-gray-600 mb-6">
+            Can't find the answer you're looking for? Explore our comprehensive guides 
+            and articles for more detailed information about technical SEO and performance optimization.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a 
+              href="/guides" 
+              class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Browse Guides
+            </a>
+            <a 
+              href="/blog" 
+              class="inline-flex items-center justify-center px-6 py-3 border-2 border-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Read Articles
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Related Resources -->
+  <section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">
+          Helpful Resources
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Dive deeper into technical SEO and performance optimization with our curated resources.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow text-center">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Core Web Vitals</h3>
+          <p class="text-gray-600 text-sm mb-4">
+            Learn how to optimize LCP, CLS, and FID for better user experience.
+          </p>
+          <a 
+            href="/category/performance" 
+            class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+          >
+            Explore Performance →
+          </a>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow text-center">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Technical SEO</h3>
+          <p class="text-gray-600 text-sm mb-4">
+            Master structured data, meta tags, and search engine optimization.
+          </p>
+          <a 
+            href="/category/technical-seo" 
+            class="text-green-600 hover:text-green-700 font-medium text-sm transition-colors"
+          >
+            Learn SEO →
+          </a>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow text-center">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Astro Framework</h3>
+          <p class="text-gray-600 text-sm mb-4">
+            Discover how to build fast, SEO-optimized sites with Astro.
+          </p>
+          <a 
+            href="/category/astro-framework" 
+            class="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors"
+          >
+            Learn Astro →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .prose {
+    color: #374151;
+    line-height: 1.75;
+  }
+  
+  .prose p {
+    margin-bottom: 1rem;
+  }
+  
+  .prose ul, .prose ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .prose code {
+    background-color: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  }
+  
+  .prose a {
+    color: #3b82f6;
+    text-decoration: underline;
+  }
+  
+  .prose a:hover {
+    color: #1d4ed8;
+  }
+  
+  .prose strong {
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  /* FAQ Animation Styles */
+  .faq-item .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  
+  .faq-item.open .faq-answer {
+    max-height: 1000px;
+    transition: max-height 0.3s ease-in;
+  }
+  
+  .faq-item .faq-icon {
+    transition: transform 0.3s ease;
+  }
+  
+  .faq-item.open .faq-icon {
+    transform: rotate(180deg);
+  }
+  
+  .faq-item.open .faq-answer {
+    display: block;
+  }
+</style>
+
+<script>
+  // FAQ Toggle Functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const faqToggles = document.querySelectorAll('.faq-toggle');
+    
+    faqToggles.forEach(toggle => {
+      toggle.addEventListener('click', function(this: HTMLButtonElement) {
+        const faqItem = this.closest('.faq-item');
+        const faqAnswer = faqItem?.querySelector('.faq-answer');
+        const isOpen = faqItem?.classList.contains('open');
+        
+        // Close all other FAQ items
+        document.querySelectorAll('.faq-item.open').forEach(item => {
+          if (item !== faqItem) {
+            item.classList.remove('open');
+            item.querySelector('.faq-toggle')?.setAttribute('aria-expanded', 'false');
+            item.querySelector('.faq-answer')?.classList.add('hidden');
+          }
+        });
+        
+        // Toggle current FAQ item
+        if (isOpen) {
+          faqItem?.classList.remove('open');
+          this.setAttribute('aria-expanded', 'false');
+          faqAnswer?.classList.add('hidden');
+        } else {
+          faqItem?.classList.add('open');
+          this.setAttribute('aria-expanded', 'true');
+          faqAnswer?.classList.remove('hidden');
+        }
+      });
+    });
+    
+    // Smooth scroll to category sections
+    const categoryLinks = document.querySelectorAll('a[href^="#category-"]');
+    categoryLinks.forEach(link => {
+      link.addEventListener('click', function(this: HTMLAnchorElement, e: Event) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href')?.substring(1);
+        const targetElement = targetId ? document.getElementById(targetId) : null;
+        
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  });
+</script>
