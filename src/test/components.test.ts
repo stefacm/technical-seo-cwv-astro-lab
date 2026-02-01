@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('SEO Components', () => {
   it('should have SeoHead component interface defined', () => {
     // This test verifies that the component interfaces are properly exported
     // and can be imported without errors
-    
+
     // Import the types to ensure they're properly defined
     const seoHeadProps = {
       title: 'Test Title',
@@ -15,9 +15,9 @@ describe('SEO Components', () => {
       noindex: false,
       nofollow: false,
       structuredData: { '@type': 'Article' },
-      breadcrumbs: [{ name: 'Home', url: '/' }]
+      breadcrumbs: [{ name: 'Home', url: '/' }],
     };
-    
+
     expect(seoHeadProps.title).toBe('Test Title');
     expect(seoHeadProps.description).toBe('Test Description');
     expect(seoHeadProps.ogType).toBe('article');
@@ -27,13 +27,13 @@ describe('SEO Components', () => {
     const baseLayoutProps = {
       seo: {
         title: 'Test Title',
-        description: 'Test Description'
+        description: 'Test Description',
       },
       showHeader: true,
       showFooter: true,
-      className: 'test-class'
+      className: 'test-class',
     };
-    
+
     expect(baseLayoutProps.seo.title).toBe('Test Title');
     expect(baseLayoutProps.showHeader).toBe(true);
     expect(baseLayoutProps.className).toBe('test-class');

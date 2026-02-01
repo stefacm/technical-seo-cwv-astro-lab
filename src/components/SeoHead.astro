@@ -1,4 +1,6 @@
 ---
+import { createSchemaGenerator } from '../lib/schemas.js';
+
 export interface SeoHeadProps {
   title: string;
   description: string;
@@ -7,7 +9,7 @@ export interface SeoHeadProps {
   ogType?: 'website' | 'article';
   noindex?: boolean;
   nofollow?: boolean;
-  structuredData?: Record<string, unknown>;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
   breadcrumbs?: BreadcrumbItem[];
 }
 
@@ -55,18 +57,8 @@ const robotsValue = robotsContent.length > 0 ? robotsContent.join(', ') : 'index
 // Generate breadcrumb structured data if breadcrumbs are provided
 let breadcrumbStructuredData = null;
 if (breadcrumbs && breadcrumbs.length > 0) {
-  breadcrumbStructuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: breadcrumbs.map((crumb, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: crumb.name,
-      item: crumb.url.startsWith('http')
-        ? crumb.url
-        : new URL(crumb.url, Astro.site || 'http://localhost:4321').href,
-    })),
-  };
+  const schemaGenerator = createSchemaGenerator();
+  breadcrumbStructuredData = schemaGenerator.generateBreadcrumbListSchema(breadcrumbs);
 }
 
 // Ensure computed variables are recognized as used
@@ -105,7 +97,11 @@ void breadcrumbStructuredData;
 
 <!-- Structured Data -->
 {structuredData && (
-  <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
+  Array.isArray(structuredData) 
+    ? structuredData.map((schema) => (
+        <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />
+      ))
+    : <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
 )}
 
 <!-- Breadcrumb Structured Data -->

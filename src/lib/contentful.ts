@@ -1,4 +1,23 @@
-import { type Asset, type ContentfulClientApi, type Entry, createClient } from 'contentful';
+import { type ContentfulClientApi, type Entry, createClient } from 'contentful';
+
+// Use any for Contentful entries due to dynamic nature of CMS content
+// This is acceptable here as we're transforming to strongly typed interfaces
+// biome-ignore lint/suspicious/noExplicitAny: Contentful entries have dynamic structure
+type ContentfulEntry = Entry<any>;
+
+// Contentful asset file type
+interface ContentfulAssetFile {
+  url: string;
+  details: {
+    size: number;
+    image?: {
+      width: number;
+      height: number;
+    };
+  };
+  fileName: string;
+  contentType: string;
+}
 
 // Environment configuration interface
 interface ContentfulConfig {
@@ -119,25 +138,23 @@ export interface ContentFetcher {
   getFaqEntries(preview?: boolean): Promise<FaqEntry[]>;
 }
 
-// Client factory for dependency injection
-export class ContentfulClientFactory {
-  static createDeliveryClient(config: ContentfulConfig): ContentfulClientApi<undefined> {
-    return createClient({
-      space: config.spaceId,
-      environment: config.environment,
-      accessToken: config.deliveryToken,
-      host: config.host,
-    });
-  }
+// Client factory functions for dependency injection
+export function createDeliveryClient(config: ContentfulConfig): ContentfulClientApi<undefined> {
+  return createClient({
+    space: config.spaceId,
+    environment: config.environment,
+    accessToken: config.deliveryToken,
+    host: config.host,
+  });
+}
 
-  static createPreviewClient(config: ContentfulConfig): ContentfulClientApi<undefined> {
-    return createClient({
-      space: config.spaceId,
-      environment: config.environment,
-      accessToken: config.previewToken,
-      host: 'preview.contentful.com',
-    });
-  }
+export function createPreviewClient(config: ContentfulConfig): ContentfulClientApi<undefined> {
+  return createClient({
+    space: config.spaceId,
+    environment: config.environment,
+    accessToken: config.previewToken,
+    host: 'preview.contentful.com',
+  });
 }
 
 // Main Contentful service implementation
@@ -151,7 +168,7 @@ export class ContentfulService implements ContentFetcher {
     return preview ? this.previewClient : this.deliveryClient;
   }
 
-  private transformAsset(asset: any): ContentfulAsset | undefined {
+  private transformAsset(asset: ContentfulEntry | undefined): ContentfulAsset | undefined {
     if (!asset || !asset.fields) return undefined;
 
     return {
@@ -163,12 +180,12 @@ export class ContentfulService implements ContentFetcher {
       fields: {
         title: String(asset.fields.title || ''),
         description: asset.fields.description ? String(asset.fields.description) : undefined,
-        file: asset.fields.file as any,
+        file: asset.fields.file as unknown as ContentfulAssetFile,
       },
     };
   }
 
-  private transformAuthor(entry: any): Author {
+  private transformAuthor(entry: ContentfulEntry): Author {
     if (!entry || !entry.fields) {
       throw new Error('Invalid author entry');
     }
@@ -182,12 +199,14 @@ export class ContentfulService implements ContentFetcher {
       name: String(entry.fields.name),
       slug: String(entry.fields.slug),
       bio: entry.fields.bio ? String(entry.fields.bio) : undefined,
-      avatar: entry.fields.avatar ? this.transformAsset(entry.fields.avatar) : undefined,
+      avatar: entry.fields.avatar
+        ? this.transformAsset(entry.fields.avatar as ContentfulEntry)
+        : undefined,
       socialLinks: entry.fields.socialLinks as Record<string, string> | undefined,
     };
   }
 
-  private transformCategory(entry: any): Category {
+  private transformCategory(entry: ContentfulEntry): Category {
     if (!entry || !entry.fields) {
       throw new Error('Invalid category entry');
     }
@@ -202,13 +221,13 @@ export class ContentfulService implements ContentFetcher {
       slug: String(entry.fields.slug),
       description: String(entry.fields.description),
       featuredImage: entry.fields.featuredImage
-        ? this.transformAsset(entry.fields.featuredImage)
+        ? this.transformAsset(entry.fields.featuredImage as ContentfulEntry)
         : undefined,
       color: String(entry.fields.color),
     };
   }
 
-  private transformBlogPost(entry: Entry<any>): BlogPost {
+  private transformBlogPost(entry: ContentfulEntry): BlogPost {
     return {
       sys: {
         id: entry.sys.id,
@@ -220,10 +239,10 @@ export class ContentfulService implements ContentFetcher {
       excerpt: String(entry.fields.excerpt),
       content: String(entry.fields.content),
       featuredImage: entry.fields.featuredImage
-        ? this.transformAsset(entry.fields.featuredImage)
+        ? this.transformAsset(entry.fields.featuredImage as ContentfulEntry)
         : undefined,
-      author: this.transformAuthor(entry.fields.author),
-      category: this.transformCategory(entry.fields.category),
+      author: this.transformAuthor(entry.fields.author as ContentfulEntry),
+      category: this.transformCategory(entry.fields.category as ContentfulEntry),
       tags: Array.isArray(entry.fields.tags) ? entry.fields.tags.map(String) : [],
       publishedAt: String(entry.fields.publishedAt),
       seo:
@@ -234,14 +253,14 @@ export class ContentfulService implements ContentFetcher {
                 ? String(entry.fields.seoDescription)
                 : undefined,
               ogImage: entry.fields.seoImage
-                ? this.transformAsset(entry.fields.seoImage)
+                ? this.transformAsset(entry.fields.seoImage as ContentfulEntry)
                 : undefined,
             }
           : undefined,
     };
   }
 
-  private transformGuide(entry: Entry<any>): Guide {
+  private transformGuide(entry: ContentfulEntry): Guide {
     return {
       sys: {
         id: entry.sys.id,
@@ -258,15 +277,15 @@ export class ContentfulService implements ContentFetcher {
         ? (entry.fields.steps as unknown as GuideStep[])
         : [],
       featuredImage: entry.fields.featuredImage
-        ? this.transformAsset(entry.fields.featuredImage)
+        ? this.transformAsset(entry.fields.featuredImage as ContentfulEntry)
         : undefined,
-      category: this.transformCategory(entry.fields.category),
+      category: this.transformCategory(entry.fields.category as ContentfulEntry),
       tools: Array.isArray(entry.fields.tools) ? entry.fields.tools.map(String) : [],
       publishedAt: String(entry.fields.publishedAt),
     };
   }
 
-  private transformFaqEntry(entry: Entry<any>): FaqEntry {
+  private transformFaqEntry(entry: ContentfulEntry): FaqEntry {
     return {
       sys: {
         id: entry.sys.id,
@@ -307,11 +326,11 @@ export class ContentfulService implements ContentFetcher {
       const entries = await client.getEntries({
         content_type: 'blogPost',
         limit,
-        order: ['-fields.publishedAt'] as any,
+        order: ['-fields.publishedAt'],
         include: 2,
       });
 
-      return entries.items.map((entry: Entry<any>) => this.transformBlogPost(entry));
+      return entries.items.map((entry: ContentfulEntry) => this.transformBlogPost(entry));
     } catch (error) {
       console.error('Error fetching blog posts:', error);
       throw new Error('Failed to fetch blog posts');
@@ -345,11 +364,11 @@ export class ContentfulService implements ContentFetcher {
       const entries = await client.getEntries({
         content_type: 'guide',
         limit,
-        order: ['-fields.publishedAt'] as any,
+        order: ['-fields.publishedAt'],
         include: 2,
       });
 
-      return entries.items.map((entry: Entry<any>) => this.transformGuide(entry));
+      return entries.items.map((entry: ContentfulEntry) => this.transformGuide(entry));
     } catch (error) {
       console.error('Error fetching guides:', error);
       throw new Error('Failed to fetch guides');
@@ -382,11 +401,11 @@ export class ContentfulService implements ContentFetcher {
       const client = this.getClient(preview);
       const entries = await client.getEntries({
         content_type: 'category',
-        order: ['fields.name'] as any,
+        order: ['fields.name'],
         include: 1,
       });
 
-      return entries.items.map((entry: Entry<any>) => this.transformCategory(entry));
+      return entries.items.map((entry: ContentfulEntry) => this.transformCategory(entry));
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw new Error('Failed to fetch categories');
@@ -398,11 +417,11 @@ export class ContentfulService implements ContentFetcher {
       const client = this.getClient(preview);
       const entries = await client.getEntries({
         content_type: 'faqEntry',
-        order: ['fields.order'] as any,
+        order: ['fields.order'],
         include: 1,
       });
 
-      return entries.items.map((entry: Entry<any>) => this.transformFaqEntry(entry));
+      return entries.items.map((entry: ContentfulEntry) => this.transformFaqEntry(entry));
     } catch (error) {
       console.error('Error fetching FAQ entries:', error);
       throw new Error('Failed to fetch FAQ entries');
@@ -425,8 +444,8 @@ export function createContentfulService(): ContentfulService | null {
     return null;
   }
 
-  const deliveryClient = ContentfulClientFactory.createDeliveryClient(config);
-  const previewClient = ContentfulClientFactory.createPreviewClient(config);
+  const deliveryClient = createDeliveryClient(config);
+  const previewClient = createPreviewClient(config);
 
   return new ContentfulService(deliveryClient, previewClient);
 }
