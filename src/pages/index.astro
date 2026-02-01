@@ -6,29 +6,34 @@ import StableLayout from '../components/StableLayout.astro';
 import ReservedSpace from '../components/ReservedSpace.astro';
 import InteractiveSearch from '../components/InteractiveSearch.astro';
 import { createContentService } from '../lib/mocks.js';
-import { createSchemaGenerator } from '../lib/schemas.js';
+import { createContentTypeSeoGenerator } from '../lib/contentTypeSeo.js';
+import { createContentTypeStructuredDataGenerator } from '../lib/contentTypeStructuredData.js';
+import { createUrlPatternManager, generateUrlForContentType } from '../lib/urlPatterns.js';
 
 // Fetch featured content for homepage
 const contentService = createContentService();
-const schemaGenerator = createSchemaGenerator();
 
 // Get featured blog posts and guides
 const featuredPosts = await contentService.getBlogPosts(3);
 const featuredGuides = await contentService.getGuides(2);
 
-// Generate structured data for homepage
-const organizationSchema = schemaGenerator.generateOrganizationSchema();
-const websiteSchema = schemaGenerator.generateWebSiteSchema();
+// Generate consistent URLs using URL pattern manager
+const urlManager = createUrlPatternManager();
+const canonicalUrl = urlManager.generateCanonicalUrl('homepage');
 
-// SEO configuration for homepage
+// Generate content type-specific SEO meta tags
+const seoGenerator = createContentTypeSeoGenerator();
+const baseSeo = seoGenerator.generateHomepageSeo('/');
+
+// Generate content type-specific structured data
+const structuredDataGenerator = createContentTypeStructuredDataGenerator();
+const structuredDataSchemas = structuredDataGenerator.generateHomepageStructuredData();
+
+// Enhanced SEO configuration with structured data
 const seo = {
-  title: 'Technical SEO CWV Astro Lab - Advanced SEO & Performance Optimization',
-  description:
-    'Master technical SEO and Core Web Vitals optimization with Astro and Contentful. Production-grade examples, guides, and best practices for modern web applications.',
-  canonical: '/',
-  ogType: 'website' as const,
-  ogImage: '/images/hero-seo-lab.jpg',
-  structuredData: [organizationSchema, websiteSchema],
+  ...baseSeo,
+  canonical: canonicalUrl,
+  structuredData: structuredDataSchemas,
 };
 
 // Variables used in template below
@@ -164,7 +169,7 @@ void seo;
                 
                 <h4 class="text-xl font-bold text-gray-900 mb-3 text-clamp-2">
                   <a 
-                    href={`/blog/${post.slug}`}
+                    href={generateUrlForContentType('blog', post)}
                     class="hover:text-blue-600 animate-colors focus-visible"
                   >
                     {post.title}
@@ -194,7 +199,7 @@ void seo;
                   </div>
                   
                   <a 
-                    href={`/blog/${post.slug}`}
+                    href={generateUrlForContentType('blog', post)}
                     class="text-blue-600 hover:text-blue-700 font-medium text-sm animate-colors focus-visible"
                   >
                     Read more →
@@ -244,7 +249,7 @@ void seo;
               
               <h4 class="text-2xl font-bold text-gray-900 mb-3">
                 <a 
-                  href={`/guides/${guide.slug}`}
+                  href={generateUrlForContentType('guide', guide)}
                   class="hover:text-blue-600 animate-colors focus-visible"
                 >
                   {guide.title}
@@ -270,7 +275,7 @@ void seo;
                 </div>
                 
                 <a 
-                  href={`/guides/${guide.slug}`}
+                  href={generateUrlForContentType('guide', guide)}
                   class="text-blue-600 hover:text-blue-700 font-medium text-sm animate-colors focus-visible"
                 >
                   Start guide →

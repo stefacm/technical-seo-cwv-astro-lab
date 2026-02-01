@@ -1,15 +1,37 @@
 ---
 import BaseLayout from '../components/BaseLayout.astro';
 import { createContentService } from '../lib/mocks.js';
-import { createSchemaGenerator } from '../lib/schemas.js';
+import { createContentTypeSeoGenerator } from '../lib/contentTypeSeo.js';
+import { createContentTypeStructuredDataGenerator } from '../lib/contentTypeStructuredData.js';
+import { createUrlPatternManager } from '../lib/urlPatterns.js';
 
 // Fetch FAQ entries
 const contentService = createContentService();
 const faqEntries = await contentService.getFaqEntries();
 
-// Generate structured data for FAQ page
-const schemaGenerator = createSchemaGenerator();
-const faqPageSchema = schemaGenerator.generateFAQPageSchema(faqEntries);
+// Generate consistent URLs using URL pattern manager
+const urlManager = createUrlPatternManager();
+const canonicalUrl = urlManager.generateCanonicalUrl('faq');
+const faqUrl = urlManager.generateFaqUrl();
+
+// Generate content type-specific SEO meta tags
+const seoGenerator = createContentTypeSeoGenerator();
+const baseSeo = seoGenerator.generateFaqSeo(faqEntries, faqUrl);
+
+// Generate content type-specific structured data
+const structuredDataGenerator = createContentTypeStructuredDataGenerator();
+const structuredDataSchemas = structuredDataGenerator.generateFaqStructuredData(faqEntries, canonicalUrl);
+
+// Generate consistent breadcrumbs using URL pattern manager
+const breadcrumbs = urlManager.generateBreadcrumbUrls('faq');
+
+// Enhanced SEO configuration with structured data and breadcrumbs
+const seo = {
+  ...baseSeo,
+  canonical: canonicalUrl,
+  structuredData: structuredDataSchemas,
+  breadcrumbs,
+};
 
 // Group FAQ entries by category
 const faqByCategory = faqEntries.reduce(
@@ -25,24 +47,6 @@ const faqByCategory = faqEntries.reduce(
 
 // Get unique categories for navigation
 const categories = Object.keys(faqByCategory).sort();
-
-// Generate breadcrumbs
-const breadcrumbs = [
-  { name: 'Home', url: '/' },
-  { name: 'FAQ', url: '/faq' },
-];
-
-// SEO configuration for FAQ page
-const seo = {
-  title: 'Frequently Asked Questions - Technical SEO Lab',
-  description:
-    'Find answers to common questions about technical SEO, Core Web Vitals, Astro framework, and web performance optimization.',
-  canonical: '/faq',
-  ogType: 'website' as const,
-  ogImage: '/images/faq-og.jpg',
-  structuredData: faqPageSchema,
-  breadcrumbs,
-};
 
 // Variables used in template below
 void categories;

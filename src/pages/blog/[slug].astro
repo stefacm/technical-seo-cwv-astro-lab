@@ -4,7 +4,9 @@ import BaseLayout from '../../components/BaseLayout.astro';
 import OptimizedImage from '../../components/OptimizedImage.astro';
 import type { BlogPost } from '../../lib/contentful.js';
 import { createContentService } from '../../lib/mocks.js';
-import { createSchemaGenerator } from '../../lib/schemas.js';
+import { createContentTypeSeoGenerator } from '../../lib/contentTypeSeo.js';
+import { createContentTypeStructuredDataGenerator } from '../../lib/contentTypeStructuredData.js';
+import { createUrlPatternManager } from '../../lib/urlPatterns.js';
 
 // Generate static paths for all blog posts
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -20,29 +22,27 @@ export const getStaticPaths: GetStaticPaths = async () => {
 // Get the blog post from props
 const { post } = Astro.props as { post: BlogPost };
 
-// Generate structured data for blog post
-const schemaGenerator = createSchemaGenerator();
-const canonicalUrl = new URL(`/blog/${post.slug}`, Astro.site || 'http://localhost:4321').href;
-const blogPostingSchema = schemaGenerator.generateBlogPostingSchema(post, canonicalUrl);
+// Generate consistent URLs using URL pattern manager
+const urlManager = createUrlPatternManager();
+const canonicalUrl = urlManager.generateCanonicalUrl('blog', post);
+const blogPostUrl = urlManager.generateBlogPostUrl(post);
 
-// Generate breadcrumbs
-const breadcrumbs = [
-  { name: 'Home', url: '/' },
-  { name: 'Blog', url: '/blog' },
-  { name: post.title, url: `/blog/${post.slug}` },
-];
+// Generate content type-specific SEO meta tags
+const seoGenerator = createContentTypeSeoGenerator();
+const baseSeo = seoGenerator.generateBlogPostSeo(post, blogPostUrl);
 
-// SEO configuration for blog post
+// Generate content type-specific structured data
+const structuredDataGenerator = createContentTypeStructuredDataGenerator();
+const structuredDataSchemas = structuredDataGenerator.generateBlogPostStructuredData(post, canonicalUrl);
+
+// Generate consistent breadcrumbs using URL pattern manager
+const breadcrumbs = urlManager.generateBreadcrumbUrls('blog', post);
+
+// Enhanced SEO configuration with structured data and breadcrumbs
 const seo = {
-  title: post.seo?.title || `${post.title} - Technical SEO Lab`,
-  description: post.seo?.description || post.excerpt,
-  canonical: `/blog/${post.slug}`,
-  ogType: 'article' as const,
-  ogImage:
-    post.seo?.ogImage?.fields.file.url ||
-    post.featuredImage?.fields.file.url ||
-    '/images/default-og.jpg',
-  structuredData: blogPostingSchema,
+  ...baseSeo,
+  canonical: canonicalUrl,
+  structuredData: structuredDataSchemas,
   breadcrumbs,
 };
 

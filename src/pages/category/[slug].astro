@@ -3,7 +3,9 @@ import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../components/BaseLayout.astro';
 import type { Category } from '../../lib/contentful.js';
 import { createContentService } from '../../lib/mocks.js';
-import { createSchemaGenerator } from '../../lib/schemas.js';
+import { createContentTypeSeoGenerator } from '../../lib/contentTypeSeo.js';
+import { createContentTypeStructuredDataGenerator } from '../../lib/contentTypeStructuredData.js';
+import { createUrlPatternManager, generateUrlForContentType } from '../../lib/urlPatterns.js';
 
 // Generate static paths for all categories
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -30,25 +32,35 @@ const [blogPosts, guides] = await Promise.all([
 const categoryBlogPosts = blogPosts.filter((post) => post.category.slug === category.slug);
 const categoryGuides = guides.filter((guide) => guide.category.slug === category.slug);
 
-// Generate structured data for category page
-const schemaGenerator = createSchemaGenerator();
-const organizationSchema = schemaGenerator.generateOrganizationSchema();
+// Generate consistent URLs using URL pattern manager
+const urlManager = createUrlPatternManager();
+const canonicalUrl = urlManager.generateCanonicalUrl('category', category);
+const categoryUrl = urlManager.generateCategoryUrl(category);
 
-// Generate breadcrumbs
-const breadcrumbs = [
-  { name: 'Home', url: '/' },
-  { name: 'Categories', url: '/categories' },
-  { name: category.name, url: `/category/${category.slug}` },
-];
+// Generate content type-specific SEO meta tags with content counts
+const seoGenerator = createContentTypeSeoGenerator();
+const baseSeo = seoGenerator.generateCategorySeo(
+  category, 
+  categoryUrl,
+  { blogPosts: categoryBlogPosts.length, guides: categoryGuides.length }
+);
 
-// SEO configuration for category page
+// Generate content type-specific structured data
+const structuredDataGenerator = createContentTypeStructuredDataGenerator();
+const structuredDataSchemas = structuredDataGenerator.generateCategoryStructuredData(
+  category,
+  canonicalUrl,
+  { blogPosts: categoryBlogPosts.length, guides: categoryGuides.length }
+);
+
+// Generate consistent breadcrumbs using URL pattern manager
+const breadcrumbs = urlManager.generateBreadcrumbUrls('category', category);
+
+// Enhanced SEO configuration with structured data and breadcrumbs
 const seo = {
-  title: `${category.name} - Technical SEO Lab`,
-  description: `Explore ${category.name.toLowerCase()} articles and guides. ${category.description}`,
-  canonical: `/category/${category.slug}`,
-  ogType: 'website' as const,
-  ogImage: category.featuredImage?.fields.file.url || '/images/default-og.jpg',
-  structuredData: organizationSchema,
+  ...baseSeo,
+  canonical: canonicalUrl,
+  structuredData: structuredDataSchemas,
   breadcrumbs,
 };
 
@@ -256,7 +268,7 @@ void seo;
               {/* Title */}
               <h3 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
                 <a 
-                  href={`/${item.type === 'blog' ? 'blog' : 'guides'}/${item.slug}`}
+                  href={generateUrlForContentType(item.type === 'blog' ? 'blog' : 'guide', item)}
                   class="hover:text-blue-600 transition-colors"
                 >
                   {item.title}
@@ -304,7 +316,7 @@ void seo;
                 )}
                 
                 <a 
-                  href={`/${item.type === 'blog' ? 'blog' : 'guides'}/${item.slug}`}
+                  href={generateUrlForContentType(item.type === 'blog' ? 'blog' : 'guide', item)}
                   class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
                 >
                   {item.type === 'blog' ? 'Read more' : 'Start guide'} →

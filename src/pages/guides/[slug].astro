@@ -4,7 +4,9 @@ import BaseLayout from '../../components/BaseLayout.astro';
 import OptimizedImage from '../../components/OptimizedImage.astro';
 import type { Guide } from '../../lib/contentful.js';
 import { createContentService } from '../../lib/mocks.js';
-import { createSchemaGenerator } from '../../lib/schemas.js';
+import { createContentTypeSeoGenerator } from '../../lib/contentTypeSeo.js';
+import { createContentTypeStructuredDataGenerator } from '../../lib/contentTypeStructuredData.js';
+import { createUrlPatternManager } from '../../lib/urlPatterns.js';
 
 // Generate static paths for all guides
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -20,25 +22,27 @@ export const getStaticPaths: GetStaticPaths = async () => {
 // Get the guide from props
 const { guide } = Astro.props as { guide: Guide };
 
-// Generate structured data for guide
-const schemaGenerator = createSchemaGenerator();
-const howToSchema = schemaGenerator.generateHowToSchema(guide);
+// Generate consistent URLs using URL pattern manager
+const urlManager = createUrlPatternManager();
+const canonicalUrl = urlManager.generateCanonicalUrl('guide', guide);
+const guideUrl = urlManager.generateGuideUrl(guide);
 
-// Generate breadcrumbs
-const breadcrumbs = [
-  { name: 'Home', url: '/' },
-  { name: 'Guides', url: '/guides' },
-  { name: guide.title, url: `/guides/${guide.slug}` },
-];
+// Generate content type-specific SEO meta tags
+const seoGenerator = createContentTypeSeoGenerator();
+const baseSeo = seoGenerator.generateGuideSeo(guide, guideUrl);
 
-// SEO configuration for guide
+// Generate content type-specific structured data
+const structuredDataGenerator = createContentTypeStructuredDataGenerator();
+const structuredDataSchemas = structuredDataGenerator.generateGuideStructuredData(guide, canonicalUrl);
+
+// Generate consistent breadcrumbs using URL pattern manager
+const breadcrumbs = urlManager.generateBreadcrumbUrls('guide', guide);
+
+// Enhanced SEO configuration with structured data and breadcrumbs
 const seo = {
-  title: `${guide.title} - Technical SEO Lab`,
-  description: guide.description,
-  canonical: `/guides/${guide.slug}`,
-  ogType: 'article' as const,
-  ogImage: guide.featuredImage?.fields.file.url || '/images/default-og.jpg',
-  structuredData: howToSchema,
+  ...baseSeo,
+  canonical: canonicalUrl,
+  structuredData: structuredDataSchemas,
   breadcrumbs,
 };
 

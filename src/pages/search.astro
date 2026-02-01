@@ -3,6 +3,9 @@ import BaseLayout from '../components/BaseLayout.astro';
 import InteractiveSearch from '../components/InteractiveSearch.astro';
 import { createContentfulService } from '../lib/contentful.ts';
 import { mockBlogPosts, mockGuides } from '../lib/mocks.ts';
+import { createContentTypeSeoGenerator } from '../lib/contentTypeSeo.js';
+import { createContentTypeStructuredDataGenerator } from '../lib/contentTypeStructuredData.js';
+import { createUrlPatternManager } from '../lib/urlPatterns.js';
 
 export const prerender = false; // SSR route
 
@@ -102,13 +105,24 @@ if (query.trim()) {
   }
 }
 
-// SEO configuration for search page - NOINDEX and NOFOLLOW
+// Generate consistent URLs using URL pattern manager
+const urlManager = createUrlPatternManager();
+const canonicalUrl = urlManager.generateCanonicalUrl('search', undefined, query);
+const searchUrl = urlManager.generateSearchUrl(query);
+
+// Generate content type-specific SEO meta tags for search page
+const seoGenerator = createContentTypeSeoGenerator();
+const baseSeo = seoGenerator.generateSearchSeo(searchUrl, query);
+
+// Generate content type-specific structured data for search page
+const structuredDataGenerator = createContentTypeStructuredDataGenerator();
+const structuredDataSchemas = structuredDataGenerator.generateSearchStructuredData(query, searchResults.length);
+
+// Enhanced SEO configuration with structured data
 const seoProps = {
-  title: query ? `Search Results for "${query}"` : 'Search',
-  description: 'Search through our blog posts and guides to find the content you need.',
-  noindex: true,
-  nofollow: true,
-  canonical: new URL('/search', Astro.site || 'http://localhost:4321').href,
+  ...baseSeo,
+  canonical: canonicalUrl,
+  structuredData: structuredDataSchemas,
 };
 ---
 
