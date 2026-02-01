@@ -1,0 +1,114 @@
+---
+export interface SeoHeadProps {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+  nofollow?: boolean;
+  structuredData?: Record<string, unknown>;
+  breadcrumbs?: BreadcrumbItem[];
+}
+
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+const {
+  title = 'Technical SEO Lab',
+  description = 'Advanced technical SEO and Core Web Vitals optimization',
+  canonical,
+  ogImage = '/images/default-og.jpg',
+  ogType = 'website',
+  noindex = false,
+  nofollow = false,
+  structuredData,
+  breadcrumbs,
+} = Astro.props as SeoHeadProps;
+
+// Ensure variables are recognized as used by TypeScript
+void title;
+void description;
+void ogType;
+void structuredData;
+
+// Generate canonical URL with fallback logic
+const canonicalUrl = canonical
+  ? canonical.startsWith('http')
+    ? canonical
+    : new URL(canonical, Astro.site || 'http://localhost:4321').href
+  : new URL(Astro.url.pathname, Astro.site || 'http://localhost:4321').href;
+
+// Generate absolute OG image URL
+const ogImageUrl = ogImage.startsWith('http')
+  ? ogImage
+  : new URL(ogImage, Astro.site || 'http://localhost:4321').href;
+
+// Generate robots meta tag content
+const robotsContent = [];
+if (noindex) robotsContent.push('noindex');
+if (nofollow) robotsContent.push('nofollow');
+const robotsValue = robotsContent.length > 0 ? robotsContent.join(', ') : 'index, follow';
+
+// Generate breadcrumb structured data if breadcrumbs are provided
+let breadcrumbStructuredData = null;
+if (breadcrumbs && breadcrumbs.length > 0) {
+  breadcrumbStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((crumb, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: crumb.name,
+      item: crumb.url.startsWith('http')
+        ? crumb.url
+        : new URL(crumb.url, Astro.site || 'http://localhost:4321').href,
+    })),
+  };
+}
+
+// Ensure computed variables are recognized as used
+void canonicalUrl;
+void ogImageUrl;
+void robotsValue;
+void breadcrumbStructuredData;
+---
+
+<!-- Primary Meta Tags -->
+<title>{title}</title>
+<meta name="title" content={title} />
+<meta name="description" content={description} />
+<meta name="robots" content={robotsValue} />
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalUrl} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageUrl} />
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={canonicalUrl} />
+<meta property="twitter:title" content={title} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={ogImageUrl} />
+
+<!-- Additional Meta Tags -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+
+<!-- Structured Data -->
+{structuredData && (
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
+)}
+
+<!-- Breadcrumb Structured Data -->
+{breadcrumbStructuredData && (
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbStructuredData)} />
+)}
