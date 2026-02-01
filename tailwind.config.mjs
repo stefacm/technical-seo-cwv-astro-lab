@@ -25,7 +25,7 @@ export default {
         'scale-in': 'scaleIn 0.2s ease-out',
         'scale-out': 'scaleOut 0.2s ease-in',
         'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
-        'shimmer': 'shimmer 1.5s ease-in-out infinite',
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -63,86 +63,86 @@ export default {
       },
       // CLS-safe transition properties
       transitionProperty: {
-        'safe': 'opacity, transform, color, background-color, border-color, text-decoration-color, fill, stroke',
-        'colors': 'color, background-color, border-color, text-decoration-color, fill, stroke',
-        'opacity': 'opacity',
-        'transform': 'transform',
+        safe: 'opacity, transform, color, background-color, border-color, text-decoration-color, fill, stroke',
+        colors: 'color, background-color, border-color, text-decoration-color, fill, stroke',
+        opacity: 'opacity',
+        transform: 'transform',
       },
       // Reserved space utilities for preventing layout shifts
       minHeight: {
-        'hero': '400px',
-        'card': '200px',
-        'thumbnail': '120px',
-        'avatar': '40px',
-        'button': '44px',
+        hero: '400px',
+        card: '200px',
+        thumbnail: '120px',
+        avatar: '40px',
+        button: '44px',
       },
       minWidth: {
-        'button': '44px',
-        'input': '200px',
-        'card': '280px',
+        button: '44px',
+        input: '200px',
+        card: '280px',
       },
       // Skeleton loading utilities
       backgroundImage: {
-        'shimmer': 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+        shimmer: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
       },
       backgroundSize: {
-        'shimmer': '200% 100%',
+        shimmer: '200% 100%',
       },
     },
   },
   plugins: [
     // Custom plugin for CLS-safe utilities
-    function({ addUtilities, theme }) {
+    function ({ addUtilities, theme }) {
       const newUtilities = {
         // Reserved space utilities
         '.reserve-space': {
           'min-height': '1px',
           'min-width': '1px',
-          'contain': 'layout style',
+          contain: 'layout style',
         },
         '.reserve-hero': {
           'min-height': theme('minHeight.hero'),
-          'contain': 'layout style',
+          contain: 'layout style',
         },
         '.reserve-card': {
           'min-height': theme('minHeight.card'),
-          'contain': 'layout style',
+          contain: 'layout style',
         },
         '.reserve-thumbnail': {
           'min-height': theme('minHeight.thumbnail'),
-          'contain': 'layout style',
+          contain: 'layout style',
         },
-        
+
         // Layout stability utilities
         '.stable-grid': {
-          'display': 'grid',
-          'contain': 'layout style',
+          display: 'grid',
+          contain: 'layout style',
           'grid-template-columns': 'repeat(auto-fit, minmax(280px, 1fr))',
         },
         '.stable-flex': {
-          'display': 'flex',
-          'contain': 'layout style',
+          display: 'flex',
+          contain: 'layout style',
           'flex-wrap': 'wrap',
         },
         '.stable-flex > *': {
           'min-width': '0',
           'flex-shrink': '1',
         },
-        
+
         // Image stability utilities
         '.img-stable': {
-          'display': 'block',
+          display: 'block',
           'max-width': '100%',
-          'height': 'auto',
-          'contain': 'layout style',
+          height: 'auto',
+          contain: 'layout style',
         },
         '.img-fixed': {
-          'width': '100%',
-          'height': '100%',
+          width: '100%',
+          height: '100%',
           'object-fit': 'cover',
-          'contain': 'layout style',
+          contain: 'layout style',
         },
-        
+
         // Text stability utilities
         '.text-stable': {
           'line-height': '1.5',
@@ -150,24 +150,24 @@ export default {
           'overflow-wrap': 'break-word',
         },
         '.text-clamp-1': {
-          'display': '-webkit-box',
+          display: '-webkit-box',
           '-webkit-line-clamp': '1',
           '-webkit-box-orient': 'vertical',
-          'overflow': 'hidden',
+          overflow: 'hidden',
         },
         '.text-clamp-2': {
-          'display': '-webkit-box',
+          display: '-webkit-box',
           '-webkit-line-clamp': '2',
           '-webkit-box-orient': 'vertical',
-          'overflow': 'hidden',
+          overflow: 'hidden',
         },
         '.text-clamp-3': {
-          'display': '-webkit-box',
+          display: '-webkit-box',
           '-webkit-line-clamp': '3',
           '-webkit-box-orient': 'vertical',
-          'overflow': 'hidden',
+          overflow: 'hidden',
         },
-        
+
         // Animation utilities that don't cause layout shifts
         '.animate-safe': {
           'transition-property': theme('transitionProperty.safe'),
@@ -189,70 +189,70 @@ export default {
           'transition-timing-function': 'cubic-bezier(0.4, 0, 0.2, 1)',
           'transition-duration': '150ms',
         },
-        
+
         // Skeleton loading utilities
         '.skeleton': {
-          'background': 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+          background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
           'background-size': '200% 100%',
-          'animation': 'shimmer 1.5s ease-in-out infinite',
+          animation: 'shimmer 1.5s ease-in-out infinite',
         },
         '.skeleton-text': {
-          'height': '1em',
+          height: '1em',
           'border-radius': '4px',
-          'background': 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+          background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
           'background-size': '200% 100%',
-          'animation': 'shimmer 1.5s ease-in-out infinite',
+          animation: 'shimmer 1.5s ease-in-out infinite',
         },
         '.skeleton-avatar': {
-          'width': '40px',
-          'height': '40px',
+          width: '40px',
+          height: '40px',
           'border-radius': '50%',
-          'background': 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+          background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
           'background-size': '200% 100%',
-          'animation': 'shimmer 1.5s ease-in-out infinite',
+          animation: 'shimmer 1.5s ease-in-out infinite',
         },
-        
+
         // Focus utilities for accessibility
         '.focus-visible': {
-          'outline': '2px solid transparent',
+          outline: '2px solid transparent',
           'outline-offset': '2px',
         },
         '.focus-visible:focus-visible': {
-          'outline': '2px solid #3b82f6',
+          outline: '2px solid #3b82f6',
           'outline-offset': '2px',
         },
-        
+
         // Safe hover effects
         '.hover-lift': {
-          'transition': 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         },
         '.hover-lift:hover': {
-          'transform': 'translateY(-2px)',
+          transform: 'translateY(-2px)',
           'box-shadow': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         },
         '.hover-scale': {
-          'transition': 'transform 0.2s ease-in-out',
+          transition: 'transform 0.2s ease-in-out',
         },
         '.hover-scale:hover': {
-          'transform': 'scale(1.02)',
+          transform: 'scale(1.02)',
         },
-        
+
         // Container query utilities for responsive design
         '.container-stable': {
           'container-type': 'inline-size',
-          'contain': 'layout style',
+          contain: 'layout style',
         },
-        
+
         // Prevent layout shift during loading
         '.loading-stable': {
           'min-height': '200px',
-          'display': 'flex',
+          display: 'flex',
           'align-items': 'center',
           'justify-content': 'center',
-          'contain': 'layout style',
+          contain: 'layout style',
         },
       };
-      
+
       addUtilities(newUtilities);
     },
   ],

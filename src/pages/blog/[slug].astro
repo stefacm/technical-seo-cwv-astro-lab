@@ -33,7 +33,10 @@ const baseSeo = seoGenerator.generateBlogPostSeo(post, blogPostUrl);
 
 // Generate content type-specific structured data
 const structuredDataGenerator = createContentTypeStructuredDataGenerator();
-const structuredDataSchemas = structuredDataGenerator.generateBlogPostStructuredData(post, canonicalUrl);
+const structuredDataSchemas = structuredDataGenerator.generateBlogPostStructuredData(
+  post,
+  canonicalUrl
+);
 
 // Generate consistent breadcrumbs using URL pattern manager
 const breadcrumbs = urlManager.generateBreadcrumbUrls('blog', post);

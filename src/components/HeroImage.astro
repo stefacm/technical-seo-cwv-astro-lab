@@ -32,7 +32,7 @@ const generateHeroUrls = (baseSrc: string) => {
       large: `${baseSrc}?w=1600&h=${Math.round((height / width) * 1600)}&fit=fill&f=webp&q=85`,
     };
   }
-  
+
   // For other images, return the original
   return {
     mobile: baseSrc,
@@ -54,7 +54,7 @@ const getOverlayClass = (color: string, opacity: number) => {
     gray: 'from-gray-600',
     indigo: 'from-indigo-600',
   };
-  
+
   const baseColor = colorMap[color] || colorMap.blue;
   return `bg-gradient-to-tr ${baseColor}/${opacity} to-transparent`;
 };

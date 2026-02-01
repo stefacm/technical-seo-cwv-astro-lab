@@ -39,11 +39,10 @@ const categoryUrl = urlManager.generateCategoryUrl(category);
 
 // Generate content type-specific SEO meta tags with content counts
 const seoGenerator = createContentTypeSeoGenerator();
-const baseSeo = seoGenerator.generateCategorySeo(
-  category, 
-  categoryUrl,
-  { blogPosts: categoryBlogPosts.length, guides: categoryGuides.length }
-);
+const baseSeo = seoGenerator.generateCategorySeo(category, categoryUrl, {
+  blogPosts: categoryBlogPosts.length,
+  guides: categoryGuides.length,
+});
 
 // Generate content type-specific structured data
 const structuredDataGenerator = createContentTypeStructuredDataGenerator();

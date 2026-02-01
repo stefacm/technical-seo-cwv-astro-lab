@@ -33,7 +33,10 @@ const baseSeo = seoGenerator.generateGuideSeo(guide, guideUrl);
 
 // Generate content type-specific structured data
 const structuredDataGenerator = createContentTypeStructuredDataGenerator();
-const structuredDataSchemas = structuredDataGenerator.generateGuideStructuredData(guide, canonicalUrl);
+const structuredDataSchemas = structuredDataGenerator.generateGuideStructuredData(
+  guide,
+  canonicalUrl
+);
 
 // Generate consistent breadcrumbs using URL pattern manager
 const breadcrumbs = urlManager.generateBreadcrumbUrls('guide', guide);

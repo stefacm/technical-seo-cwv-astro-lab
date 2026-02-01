@@ -45,7 +45,7 @@ export class ContentTypeSeoGenerator {
    */
   generateBlogPostSeo(post: BlogPost, canonicalPath: string): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
+
     return {
       title: post.seo?.title || `${post.title} - ${this.config.siteName}`,
       description: post.seo?.description || post.excerpt,
@@ -67,10 +67,10 @@ export class ContentTypeSeoGenerator {
    */
   generateGuideSeo(guide: Guide, canonicalPath: string): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
+
     // Enhanced description with guide metadata
     const enhancedDescription = `${guide.description} ${guide.difficulty} level guide, estimated ${guide.estimatedTime} minutes.`;
-    
+
     return {
       title: `${guide.title} - ${this.config.siteName}`,
       description: enhancedDescription,
@@ -90,18 +90,18 @@ export class ContentTypeSeoGenerator {
    * Optimized for category listing pages with content counts
    */
   generateCategorySeo(
-    category: Category, 
-    canonicalPath: string, 
+    category: Category,
+    canonicalPath: string,
     contentCounts?: { blogPosts: number; guides: number }
   ): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
+
     // Enhanced description with content counts if available
     let description = `Explore ${category.name.toLowerCase()} articles and guides. ${category.description}`;
     if (contentCounts) {
       description += ` ${contentCounts.blogPosts} articles and ${contentCounts.guides} guides available.`;
     }
-    
+
     return {
       title: `${category.name} - ${this.config.siteName}`,
       description,
@@ -121,17 +121,18 @@ export class ContentTypeSeoGenerator {
    * Optimized for FAQ pages with question count
    */
   generateFaqSeo(
-    faqEntries: FaqEntry[], 
+    faqEntries: FaqEntry[],
     canonicalPath: string,
     customTitle?: string,
     customDescription?: string
   ): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
+
     const title = customTitle || `Frequently Asked Questions - ${this.config.siteName}`;
-    const description = customDescription || 
+    const description =
+      customDescription ||
       `Find answers to common questions. ${faqEntries.length} frequently asked questions about technical SEO and Core Web Vitals.`;
-    
+
     return {
       title,
       description,
@@ -153,11 +154,13 @@ export class ContentTypeSeoGenerator {
     customDescription?: string
   ): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
-    const title = customTitle || `${this.config.siteName} - Advanced Technical SEO and Core Web Vitals`;
-    const description = customDescription || 
+
+    const title =
+      customTitle || `${this.config.siteName} - Advanced Technical SEO and Core Web Vitals`;
+    const description =
+      customDescription ||
       'Master technical SEO and Core Web Vitals optimization with comprehensive guides, articles, and best practices for modern web development.';
-    
+
     return {
       title,
       description,
@@ -173,20 +176,17 @@ export class ContentTypeSeoGenerator {
    * Generate SEO meta tags for search pages
    * Optimized for search functionality with NOINDEX/NOFOLLOW
    */
-  generateSearchSeo(
-    canonicalPath: string,
-    query?: string
-  ): SeoHeadProps {
+  generateSearchSeo(canonicalPath: string, query?: string): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
-    const title = query 
+
+    const title = query
       ? `Search results for "${query}" - ${this.config.siteName}`
       : `Search - ${this.config.siteName}`;
-    
+
     const description = query
       ? `Search results for "${query}". Find relevant articles and guides.`
       : 'Search our comprehensive collection of technical SEO articles and guides.';
-    
+
     return {
       title,
       description,
@@ -209,11 +209,13 @@ export class ContentTypeSeoGenerator {
     description?: string
   ): SeoHeadProps {
     const canonicalUrl = this.buildCanonicalUrl(canonicalPath);
-    
-    const fallbackTitle = title || `${this.capitalizeContentType(contentType)} - ${this.config.siteName}`;
-    const fallbackDescription = description || 
+
+    const fallbackTitle =
+      title || `${this.capitalizeContentType(contentType)} - ${this.config.siteName}`;
+    const fallbackDescription =
+      description ||
       `Explore ${contentType} content on ${this.config.siteName}. Technical SEO and Core Web Vitals optimization resources.`;
-    
+
     return {
       title: fallbackTitle,
       description: fallbackDescription,
@@ -232,7 +234,7 @@ export class ContentTypeSeoGenerator {
     if (path.startsWith('http')) {
       return path;
     }
-    
+
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
     return `${this.config.siteUrl}${cleanPath}`;
   }
@@ -282,7 +284,7 @@ export function detectContentTypeFromPath(path: string): ContentType {
   if (path.startsWith('/category/')) return 'category';
   if (path.startsWith('/faq')) return 'faq';
   if (path.startsWith('/search')) return 'search';
-  
+
   // Default fallback
   return 'homepage';
 }

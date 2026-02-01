@@ -20,7 +20,10 @@ const baseSeo = seoGenerator.generateFaqSeo(faqEntries, faqUrl);
 
 // Generate content type-specific structured data
 const structuredDataGenerator = createContentTypeStructuredDataGenerator();
-const structuredDataSchemas = structuredDataGenerator.generateFaqStructuredData(faqEntries, canonicalUrl);
+const structuredDataSchemas = structuredDataGenerator.generateFaqStructuredData(
+  faqEntries,
+  canonicalUrl
+);
 
 // Generate consistent breadcrumbs using URL pattern manager
 const breadcrumbs = urlManager.generateBreadcrumbUrls('faq');

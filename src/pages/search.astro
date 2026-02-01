@@ -116,7 +116,10 @@ const baseSeo = seoGenerator.generateSearchSeo(searchUrl, query);
 
 // Generate content type-specific structured data for search page
 const structuredDataGenerator = createContentTypeStructuredDataGenerator();
-const structuredDataSchemas = structuredDataGenerator.generateSearchStructuredData(query, searchResults.length);
+const structuredDataSchemas = structuredDataGenerator.generateSearchStructuredData(
+  query,
+  searchResults.length
+);
 
 // Enhanced SEO configuration with structured data
 const seoProps = {

@@ -34,7 +34,7 @@ const generateResponsiveUrls = (baseSrc: string, baseWidth: number) => {
       '2x': `${baseSrc}?w=${baseWidth * 2}&h=${Math.round((height / width) * baseWidth * 2)}&fit=fill&f=webp`,
     };
   }
-  
+
   // For other images, return the original
   return {
     '1x': baseSrc,

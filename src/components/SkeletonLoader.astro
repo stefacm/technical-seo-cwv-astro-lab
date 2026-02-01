@@ -21,7 +21,7 @@ const {
 const getSkeletonClasses = (skeletonType: string) => {
   const baseClasses = 'skeleton reserve-space';
   const animationClass = animated ? 'animate-shimmer' : '';
-  
+
   switch (skeletonType) {
     case 'card':
       return `${baseClasses} ${animationClass} reserve-card`;

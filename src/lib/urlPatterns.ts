@@ -21,7 +21,8 @@ export const URL_VALIDATION_RULES = {
     pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
     minLength: 3,
     maxLength: 100,
-    description: 'Lowercase letters, numbers, and hyphens only. Must start and end with alphanumeric.',
+    description:
+      'Lowercase letters, numbers, and hyphens only. Must start and end with alphanumeric.',
   },
   path: {
     pattern: /^\/[a-z0-9\-\/]*$/,
@@ -30,7 +31,15 @@ export const URL_VALIDATION_RULES = {
 } as const;
 
 // Content type enumeration for URL generation
-export type UrlContentType = 'blog' | 'guide' | 'category' | 'faq' | 'homepage' | 'search' | 'preview' | 'api';
+export type UrlContentType =
+  | 'blog'
+  | 'guide'
+  | 'category'
+  | 'faq'
+  | 'homepage'
+  | 'search'
+  | 'preview'
+  | 'api';
 
 /**
  * URL pattern generator and validator
@@ -124,35 +133,39 @@ export class UrlPatternManager {
    * Generate canonical URL for any content type
    * Ensures all canonical URLs are absolute and consistent
    */
-  generateCanonicalUrl(contentType: UrlContentType, content?: BlogPost | Guide | Category, query?: string): string {
+  generateCanonicalUrl(
+    contentType: UrlContentType,
+    content?: BlogPost | Guide | Category,
+    query?: string
+  ): string {
     switch (contentType) {
       case 'blog':
         if (content && 'excerpt' in content) {
           return this.generateBlogPostUrl(content as BlogPost, true);
         }
         break;
-      
+
       case 'guide':
         if (content && 'difficulty' in content) {
           return this.generateGuideUrl(content as Guide, true);
         }
         break;
-      
+
       case 'category':
         if (content && 'color' in content) {
           return this.generateCategoryUrl(content as Category, true);
         }
         break;
-      
+
       case 'faq':
         return this.generateFaqUrl(true);
-      
+
       case 'homepage':
         return this.generateHomepageUrl(true);
-      
+
       case 'search':
         return this.generateSearchUrl(query, true);
-      
+
       default:
         return `${this.baseUrl}/`;
     }
@@ -180,7 +193,9 @@ export class UrlPatternManager {
 
     // Validate length
     if (formattedSlug.length < URL_VALIDATION_RULES.slug.minLength) {
-      throw new Error(`Slug must be at least ${URL_VALIDATION_RULES.slug.minLength} characters long`);
+      throw new Error(
+        `Slug must be at least ${URL_VALIDATION_RULES.slug.minLength} characters long`
+      );
     }
 
     if (formattedSlug.length > URL_VALIDATION_RULES.slug.maxLength) {
@@ -191,7 +206,9 @@ export class UrlPatternManager {
 
     // Validate pattern
     if (!URL_VALIDATION_RULES.slug.pattern.test(formattedSlug)) {
-      throw new Error(`Invalid slug format: ${formattedSlug}. ${URL_VALIDATION_RULES.slug.description}`);
+      throw new Error(
+        `Invalid slug format: ${formattedSlug}. ${URL_VALIDATION_RULES.slug.description}`
+      );
     }
 
     return formattedSlug;
@@ -219,7 +236,7 @@ export class UrlPatternManager {
     if (path.startsWith('/search')) return 'search';
     if (path.startsWith('/preview/')) return 'preview';
     if (path.startsWith('/api/')) return 'api';
-    
+
     return null;
   }
 
@@ -232,19 +249,19 @@ export class UrlPatternManager {
       case 'blog':
         const blogMatch = path.match(/^\/blog\/([^\/\?]+)/);
         return blogMatch ? blogMatch[1] : null;
-      
+
       case 'guide':
         const guideMatch = path.match(/^\/guides\/([^\/\?]+)/);
         return guideMatch ? guideMatch[1] : null;
-      
+
       case 'category':
         const categoryMatch = path.match(/^\/category\/([^\/\?]+)/);
         return categoryMatch ? categoryMatch[1] : null;
-      
+
       case 'preview':
         const previewMatch = path.match(/^\/preview\/[^\/]+\/([^\/\?]+)/);
         return previewMatch ? previewMatch[1] : null;
-      
+
       default:
         return null;
     }
@@ -254,7 +271,10 @@ export class UrlPatternManager {
    * Generate breadcrumb URLs for content hierarchy
    * Ensures consistent breadcrumb navigation patterns
    */
-  generateBreadcrumbUrls(contentType: UrlContentType, content?: BlogPost | Guide | Category): Array<{ name: string; url: string }> {
+  generateBreadcrumbUrls(
+    contentType: UrlContentType,
+    content?: BlogPost | Guide | Category
+  ): Array<{ name: string; url: string }> {
     const breadcrumbs: Array<{ name: string; url: string }> = [
       { name: 'Home', url: this.generateHomepageUrl() },
     ];
@@ -263,37 +283,37 @@ export class UrlPatternManager {
       case 'blog':
         breadcrumbs.push({ name: 'Blog', url: '/blog' });
         if (content && 'title' in content) {
-          breadcrumbs.push({ 
-            name: content.title, 
-            url: this.generateBlogPostUrl(content as BlogPost) 
+          breadcrumbs.push({
+            name: content.title,
+            url: this.generateBlogPostUrl(content as BlogPost),
           });
         }
         break;
-      
+
       case 'guide':
         breadcrumbs.push({ name: 'Guides', url: '/guides' });
         if (content && 'title' in content) {
-          breadcrumbs.push({ 
-            name: content.title, 
-            url: this.generateGuideUrl(content as Guide) 
+          breadcrumbs.push({
+            name: content.title,
+            url: this.generateGuideUrl(content as Guide),
           });
         }
         break;
-      
+
       case 'category':
         breadcrumbs.push({ name: 'Categories', url: '/categories' });
         if (content && 'name' in content) {
-          breadcrumbs.push({ 
-            name: content.name, 
-            url: this.generateCategoryUrl(content as Category) 
+          breadcrumbs.push({
+            name: content.name,
+            url: this.generateCategoryUrl(content as Category),
           });
         }
         break;
-      
+
       case 'faq':
         breadcrumbs.push({ name: 'FAQ', url: this.generateFaqUrl() });
         break;
-      
+
       case 'search':
         breadcrumbs.push({ name: 'Search', url: this.generateSearchUrl() });
         break;
@@ -306,24 +326,27 @@ export class UrlPatternManager {
    * Generate sitemap URLs for content type
    * Ensures consistent URL patterns in sitemaps
    */
-  generateSitemapUrls(contentType: UrlContentType, content: BlogPost[] | Guide[] | Category[]): string[] {
+  generateSitemapUrls(
+    contentType: UrlContentType,
+    content: BlogPost[] | Guide[] | Category[]
+  ): string[] {
     const urls: string[] = [];
 
     switch (contentType) {
       case 'blog':
-        (content as BlogPost[]).forEach(post => {
+        (content as BlogPost[]).forEach((post) => {
           urls.push(this.generateBlogPostUrl(post, true));
         });
         break;
-      
+
       case 'guide':
-        (content as Guide[]).forEach(guide => {
+        (content as Guide[]).forEach((guide) => {
           urls.push(this.generateGuideUrl(guide, true));
         });
         break;
-      
+
       case 'category':
-        (content as Category[]).forEach(category => {
+        (content as Category[]).forEach((category) => {
           urls.push(this.generateCategoryUrl(category, true));
         });
         break;
@@ -360,25 +383,25 @@ export function generateUrlForContentType(
         return urlManager.generateBlogPostUrl(content as BlogPost, absolute);
       }
       break;
-    
+
     case 'guide':
       if (content && 'difficulty' in content) {
         return urlManager.generateGuideUrl(content as Guide, absolute);
       }
       break;
-    
+
     case 'category':
       if (content && 'color' in content) {
         return urlManager.generateCategoryUrl(content as Category, absolute);
       }
       break;
-    
+
     case 'faq':
       return urlManager.generateFaqUrl(absolute);
-    
+
     case 'homepage':
       return urlManager.generateHomepageUrl(absolute);
-    
+
     case 'search':
       return urlManager.generateSearchUrl(query, absolute);
   }
@@ -391,15 +414,19 @@ export function generateUrlForContentType(
  * Utility function to validate content slug format
  * Ensures all content follows consistent slug patterns
  */
-export function validateContentSlug(slug: string): { isValid: boolean; error?: string; formatted?: string } {
+export function validateContentSlug(slug: string): {
+  isValid: boolean;
+  error?: string;
+  formatted?: string;
+} {
   try {
     const urlManager = createUrlPatternManager();
     const formatted = urlManager.validateAndFormatSlug(slug);
     return { isValid: true, formatted };
   } catch (error) {
-    return { 
-      isValid: false, 
-      error: error instanceof Error ? error.message : 'Invalid slug format' 
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : 'Invalid slug format',
     };
   }
 }

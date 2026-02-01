@@ -5,7 +5,13 @@ import type { BlogPost, Guide, Category, FaqEntry } from './contentful.js';
 import { createSchemaGenerator } from './schemas.js';
 
 // Content type enumeration for structured data
-export type StructuredDataContentType = 'blog' | 'guide' | 'category' | 'faq' | 'homepage' | 'search';
+export type StructuredDataContentType =
+  | 'blog'
+  | 'guide'
+  | 'category'
+  | 'faq'
+  | 'homepage'
+  | 'search';
 
 // Enhanced structured data configuration
 interface StructuredDataConfig {
@@ -34,7 +40,7 @@ export class ContentTypeStructuredDataGenerator {
    * Returns BlogPosting schema with enhanced metadata
    */
   generateBlogPostStructuredData(
-    post: BlogPost, 
+    post: BlogPost,
     canonicalUrl: string,
     includeOrganization = true
   ): Record<string, unknown>[] {
@@ -67,7 +73,7 @@ export class ContentTypeStructuredDataGenerator {
    * Returns HowTo schema with enhanced step-by-step information
    */
   generateGuideStructuredData(
-    guide: Guide, 
+    guide: Guide,
     canonicalUrl: string,
     includeOrganization = true
   ): Record<string, unknown>[] {
@@ -113,7 +119,11 @@ export class ContentTypeStructuredDataGenerator {
     const schemas: Record<string, unknown>[] = [];
 
     // Add CollectionPage schema
-    const collectionPageSchema = this.generateCollectionPageSchema(category, canonicalUrl, contentCounts);
+    const collectionPageSchema = this.generateCollectionPageSchema(
+      category,
+      canonicalUrl,
+      contentCounts
+    );
     schemas.push(collectionPageSchema);
 
     // Add BreadcrumbList schema
@@ -183,10 +193,7 @@ export class ContentTypeStructuredDataGenerator {
    * Generate structured data for search pages
    * Returns SearchResultsPage schema (no indexing)
    */
-  generateSearchStructuredData(
-    query?: string,
-    resultCount?: number
-  ): Record<string, unknown>[] {
+  generateSearchStructuredData(query?: string, resultCount?: number): Record<string, unknown>[] {
     const schemas: Record<string, unknown>[] = [];
 
     // Add SearchResultsPage schema
@@ -279,7 +286,7 @@ export class ContentTypeStructuredDataGenerator {
     if (contentCounts) {
       const totalItems = contentCounts.blogPosts + contentCounts.guides;
       schema.mainEntity = {
-        ...schema.mainEntity as Record<string, unknown>,
+        ...(schema.mainEntity as Record<string, unknown>),
         numberOfItems: totalItems,
       };
     }
@@ -309,7 +316,7 @@ export class ContentTypeStructuredDataGenerator {
       '@context': 'https://schema.org',
       '@type': 'SearchResultsPage',
       name: query ? `Search results for "${query}"` : 'Search',
-      description: query 
+      description: query
         ? `Search results for "${query}" on ${this.config.siteName}`
         : `Search ${this.config.siteName} for articles and guides`,
       url: `${this.config.siteUrl}/search${query ? `?q=${encodeURIComponent(query)}` : ''}`,
@@ -391,34 +398,40 @@ export function generateStructuredDataForContentType(
         return generator.generateBlogPostStructuredData(content as BlogPost, canonicalUrl);
       }
       break;
-    
+
     case 'guide':
       if (content && 'difficulty' in content) {
         return generator.generateGuideStructuredData(content as Guide, canonicalUrl);
       }
       break;
-    
+
     case 'category':
       if (content && 'color' in content) {
-        const contentCounts = additionalContext?.contentCounts as { blogPosts: number; guides: number } | undefined;
-        return generator.generateCategoryStructuredData(content as Category, canonicalUrl, contentCounts);
+        const contentCounts = additionalContext?.contentCounts as
+          | { blogPosts: number; guides: number }
+          | undefined;
+        return generator.generateCategoryStructuredData(
+          content as Category,
+          canonicalUrl,
+          contentCounts
+        );
       }
       break;
-    
+
     case 'faq':
       if (Array.isArray(content)) {
         return generator.generateFaqStructuredData(content as FaqEntry[], canonicalUrl);
       }
       break;
-    
+
     case 'homepage':
       return generator.generateHomepageStructuredData();
-    
+
     case 'search':
       const query = additionalContext?.query as string | undefined;
       const resultCount = additionalContext?.resultCount as number | undefined;
       return generator.generateSearchStructuredData(query, resultCount);
-    
+
     default:
       return generator.generateFallbackStructuredData(contentType, canonicalUrl);
   }
